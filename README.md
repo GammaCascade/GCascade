@@ -1,7 +1,7 @@
 # GCascade
 gamma-ray propagation package for Wolfram Mathematica
 
-A BUG HAS BEEN BROUGHT TO OUR ATTENTION, AND A NEW VERSION IS UNDERWAY.
+A BUG HAS BEEN BROUGHT TO OUR ATTENTION AND A NEW VERSION IS UNDERWAY.
 
 To use GCascade dowload the .wl and .nb files and place them in the same directory as the libraries folder.
 
