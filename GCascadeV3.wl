@@ -1,6 +1,6 @@
 (* ::Package:: *)
 
-BeginPackage["GCascadeV2`"]
+BeginPackage["GCascadeV3`"]
 
 
 
@@ -57,7 +57,7 @@ Begin["`Private`"]
 Print["You Have Imported GCascade. Setup will take about a minute."]; 
 
 
-libraryLocation = FileNameJoin[{NotebookDirectory[],"LibrariesV2"}];
+libraryLocation = FileNameJoin[{NotebookDirectory[],"LibrariesV3"}];
 (*libraryLocation = FileNameJoin[{"/home/carlos/Software/GCascade","LibrariesV2"}];*)
 libraryNames="DiffCascadeSpectralTable";
 
@@ -71,7 +71,7 @@ thomp = (8./3)*Pi*classicalRadius^2;
 
 (*Cosmological parameters from Planck '15*)
 
-packageName="GCascadeV2";
+packageName="GCascadeV3";
 H0=67.7 (*(km/s)/Mpc*);
 \[CapitalOmega]\[CapitalLambda]=0.691;
 \[CapitalOmega]m=0.308;
