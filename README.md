@@ -1,9 +1,14 @@
 # GCascade
-gamma-ray propagation package for Wolfram Mathematica created by Carlos Blanco
+gamma-ray propagation package for Wolfram Mathematica created by Carlos Blanco and Antonio Campanema
 
 Documentation: https://arxiv.org/abs/1804.00005
 
 NOTE: Since LibrariesV3 is held in git LFS, you might need to download the raw archive directly if it isn't downloaded correctly during cloning. (git clone sometimes downloads a file named "LibrariesV3" without any contents) 
+
+
+# V4
+
+Under development.
 
 
 # V3
