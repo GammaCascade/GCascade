@@ -1,5 +1,5 @@
 # GCascade
-gamma-ray propagation package for Wolfram Mathematica created by Carlos Blanco and Antonio Campanema
+gamma-ray propagation package for Wolfram Mathematica created by Carlos Blanco and Antonio Capanema
 
 Documentation: https://arxiv.org/abs/1804.00005
 
