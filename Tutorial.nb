@@ -1,0 +1,2743 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 11.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[    116752,       2735]
+NotebookOptionsPosition[    109023,       2550]
+NotebookOutlinePosition[    109587,       2570]
+CellTagsIndexPosition[    109544,       2567]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["\[Gamma]-Cascade Tutorial Notebook", "Title",
+ CellChangeTimes->{{3.724775379256321*^9, 3.7247753808814926`*^9}, {
+   3.724775412603834*^9, 3.724775431711986*^9}, {3.725379608768941*^9, 
+   3.725379609865661*^9}, 3.7314477507170525`*^9, {3.931533145382752*^9, 
+   3.931533145498214*^9}},
+ CellID->99529794,ExpressionUUID->"da265509-a8d4-4324-8bfe-425a1de32681"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+Welcome to the \[Gamma]-Cascade tutorial notebook. This notebook aims to walk \
+through the basic functionality of the \[Gamma]-Cascade gamma-ray propagation \
+package assuming very little prior knowledge of Mathematica. For information \
+about the specific physics models used by the code, please refer to the \
+documentation. To use this notebook simply follow the instructions, executing \
+cells containing code by pressing (Shift + Enter).\
+\>", "Subchapter",
+ CellChangeTimes->{{3.724775455221959*^9, 3.7247756677768707`*^9}, {
+   3.7250383332322683`*^9, 3.7250383556201296`*^9}, {3.725038389546157*^9, 
+   3.7250384653423004`*^9}, {3.725040767393932*^9, 3.7250408543472433`*^9}, 
+   3.725040895159438*^9, {3.725051511845199*^9, 3.725051527117547*^9}, {
+   3.725301358215523*^9, 3.7253013923037243`*^9}, {3.7314477508393784`*^9, 
+   3.7314477509496717`*^9}, 3.731634769192498*^9, {3.9315331384083633`*^9, 
+   3.931533144023054*^9}, 3.931533274621183*^9},
+ CellID->169207782,ExpressionUUID->"506d7f65-6c60-49bb-b6b2-ea2c9ca444b2"],
+
+Cell[CellGroupData[{
+
+Cell[TextData[{
+ StyleBox["Importing and Setting ", "Chapter"],
+ StyleBox["Up", "Chapter"],
+ StyleBox[" The Package", "Chapter"]
+}], "Section",
+ CellChangeTimes->{{3.7250376947975836`*^9, 3.725037791968221*^9}},
+ CellID->95071794,ExpressionUUID->"d31c9ffc-8199-445a-895c-21c1dd331ea7"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+The following code adds the location of the package ( .wl file) to your \
+\"$Path\" so that the Mathematica kernel knows where to find it when you try \
+to import the package.  Note that the \[OpenCurlyDoubleQuote];\
+\[CloseCurlyDoubleQuote] at the end of the expression prevents Mathematica \
+from returning the output of a given command.  \
+\>", "Subsection",
+ CellChangeTimes->{{3.7250374948061934`*^9, 3.7250376374386663`*^9}, 
+   3.725037935663986*^9, {3.725038610161211*^9, 3.725038613269878*^9}, 
+   3.731447806266756*^9, {3.931536074573744*^9, 3.931536075613813*^9}},
+ CellID->4253156,ExpressionUUID->"0d528ea2-49ee-4558-8bd6-ce2aac46b28f"],
+
+Cell[BoxData[
+ StyleBox[
+  RowBox[{
+   RowBox[{"AppendTo", "[", 
+    RowBox[{"$Path", ",", " ", 
+     RowBox[{"NotebookDirectory", "[", "]"}]}], "]"}], ";"}], 
+  "Input"]], "Input",
+ CellLabel->"In[1]:=",
+ CellID->598119939,ExpressionUUID->"36674ca9-ab23-402a-b2b1-af3ec67ae0d9"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[TextData[{
+ "Next, we import the package using the command short-hand \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["<<", "Input"],
+ "\[CloseCurlyDoubleQuote]. When the command is executed, the code within the \
+package file is run in order to set up the internal functions and variables \
+which are then made available in this notebook. "
+}], "Subsection",
+ CellChangeTimes->{{3.72437562808994*^9, 3.724375676848176*^9}, 
+   3.7243799695814533`*^9, 3.7244295376723766`*^9, {3.7244366197776213`*^9, 
+   3.7244366943176966`*^9}, {3.725037254997822*^9, 3.7250373243605127`*^9}, {
+   3.725037366570842*^9, 3.7250373666177235`*^9}, 3.7250374850556364`*^9, {
+   3.7250376471603837`*^9, 3.7250376589703107`*^9}, {3.7250379173002176`*^9, 
+   3.7250380357108254`*^9}, {3.725038629024165*^9, 3.725038639468829*^9}, {
+   3.725301505923707*^9, 3.725301506207963*^9}},
+ CellID->476640968,ExpressionUUID->"b03fa9bc-ed56-4b40-86c9-50c8c7eb6a91"],
+
+Cell[BoxData[
+ RowBox[{"<<", "GCascadeV4.wl"}]], "Input",
+ CellLabel->"In[2]:=",
+ CellID->471090524,ExpressionUUID->"64a8f0b5-cc07-460f-be05-f482bbdee4c5"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[TextData[StyleBox["Propagating Gamma-Rays from a Point Source", \
+"Chapter"]], "Section",
+ CellChangeTimes->{{3.7250385749957128`*^9, 3.725038588042203*^9}, {
+  3.725038781971844*^9, 3.725038783550283*^9}, {3.931609347799872*^9, 
+  3.931609350134377*^9}, {3.9316094323637953`*^9, 3.931609433449733*^9}},
+ CellID->256563983,ExpressionUUID->"1516cf4e-a82f-41f7-ae3a-8277cdefb687"],
+
+Cell[CellGroupData[{
+
+Cell["Injected Spectrum", "Section",
+ CellChangeTimes->{{3.7250388363018703`*^9, 3.725038841349275*^9}},
+ CellID->43342969,ExpressionUUID->"5dc9e800-2eec-4c84-b09d-d55aadd46a5d"],
+
+Cell[CellGroupData[{
+
+Cell[TextData[{
+ "The central input for ",
+ StyleBox["\[Gamma]-Cascade",
+  FontWeight->"Bold"],
+ " is the injected spectrum. Formatting this array correctly is vital for the \
+code\[CloseCurlyQuote]s functionality. Injected spectra should be lists of \
+length 300, containing real values of the injected differential spectrum ",
+ Cell[BoxData[
+  FormBox[
+   FractionBox["dN", "d\[Epsilon]"], TraditionalForm]],ExpressionUUID->
+  "ead1fc4f-fdd5-40b1-b64c-c2c68a9e2c71"],
+ " in ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"[", 
+    RowBox[{
+     SuperscriptBox["GeV", 
+      RowBox[{"-", "1"}]], " ", 
+     SuperscriptBox[
+      StyleBox["s",
+       FontSlant->"Plain"], 
+      RowBox[{"-", "1"}]]}], "]"}], TraditionalForm]],ExpressionUUID->
+  "240c4278-a300-4466-ba75-7c451eb23e31"],
+ ", evaluated at specific energies given by the \[OpenCurlyDoubleQuote]",
+ StyleBox["energies", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] array. \[OpenCurlyDoubleQuote]",
+ StyleBox["energies", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] is a list of 300 logarithmically spaced energies \
+from ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    SuperscriptBox["10", 
+     RowBox[{"-", "1"}]], " ", "GeV", " ", "to", " ", 
+    SuperscriptBox["10", "12"], "GeV"}], TraditionalForm]],ExpressionUUID->
+  "1669c3ac-71e6-46f6-b5f7-3a696f014fac"],
+ ", imported from the \[Gamma]-Cascade package. \n\nAs an example, below, the \
+variable \[OpenCurlyDoubleQuote]",
+ StyleBox["injSpectrum", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] is assigned a list which is made using the \
+function \[OpenCurlyDoubleQuote]",
+ StyleBox["Table", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote]. \[OpenCurlyDoubleQuote]",
+ StyleBox["Table", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] takes in two inputs: a function, ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"f", "(", "i", ")"}], TraditionalForm]],ExpressionUUID->
+  "f279811f-6004-4ec3-9923-ac5abd97e318"],
+ StyleBox[",", "Input"],
+ "and an iterator, ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"{", 
+    RowBox[{"i", ",", " ", 
+     SubscriptBox["i", "start"], ",", " ", 
+     SubscriptBox["i", "final"], ",", " ", "di"}], "}"}], TraditionalForm]],
+  ExpressionUUID->"586130c3-8875-42c8-8d30-38719a46a2b5"],
+ ", and returns a list, ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"f", "(", 
+      SubscriptBox["i", "start"], ")"}], ",", " ", 
+     RowBox[{"f", "(", 
+      RowBox[{
+       SubscriptBox["i", "start"], "+", "di"}], ")"}], ",", " ", "...", " ", 
+     ",", " ", 
+     RowBox[{"f", "(", 
+      SubscriptBox["i", "final"], ")"}]}], "}"}], TraditionalForm]],
+  ExpressionUUID->"123cb159-844a-4c52-a848-8f724c6ac7d3"],
+ ". If not specified, Mathematica assumes ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"di", "=", "1"}], TraditionalForm]],ExpressionUUID->
+  "abc6c6cc-0ada-4657-8481-7b314430f1e1"],
+ ". We use \[OpenCurlyDoubleQuote]",
+ StyleBox["Table", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] to generate a list of the values of the function \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["cutoffPowerLaw", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] evaluated at the ",
+ Cell[BoxData[
+  FormBox["i", TraditionalForm]],ExpressionUUID->
+  "0e87266a-0c8b-4fd1-aa67-780224766140"],
+ "-",
+ StyleBox["th",
+  IgnoreSpellCheck->True],
+ " member of the energies list, \[OpenCurlyDoubleQuote]",
+ StyleBox["energies[[i]]", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] for each of the 300 energies. The function \
+\[OpenCurlyDoubleQuote]",
+ StyleBox[Cell[BoxData[
+  FormBox[
+   RowBox[{
+    StyleBox["cutoffPowerLaw", "Input",
+     FontSize->16,
+     FontWeight->"Bold"], 
+    StyleBox["[",
+     FontSize->18,
+     FontWeight->"Bold"], 
+    RowBox[{
+     StyleBox["\[Epsilon]",
+      FontSize->18,
+      FontWeight->"Bold"], 
+     StyleBox[",",
+      FontSize->18,
+      FontWeight->"Bold"], 
+     StyleBox["\[CapitalGamma]",
+      FontSize->18,
+      FontWeight->"Bold"], ",", 
+     SubscriptBox["\[Epsilon]", "cutoff"], 
+     StyleBox[",",
+      FontSize->18,
+      FontWeight->"Bold"], 
+     StyleBox["A",
+      FontSize->18,
+      FontWeight->"Bold"]}], 
+    StyleBox["]",
+     FontSize->18]}], TraditionalForm]], "Input",
+  FontSize->16,
+  FontWeight->"Bold",ExpressionUUID->"d293926a-82e5-4637-9663-8ee54a13f621"], 
+  "InlineFormula"],
+ "\[CloseCurlyDoubleQuote] returns the value of an exponentially cutoff power \
+law, ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    RowBox[{
+     FractionBox["dN", "d\[Epsilon]"], 
+     RowBox[{"(", 
+      RowBox[{"\[Epsilon]", ",", "\[CapitalGamma]", ",", 
+       SubscriptBox["\[Epsilon]", "cutoff"], ",", "A"}], ")"}]}], "=", 
+    RowBox[{"A", "\[Times]", 
+     SuperscriptBox["\[Epsilon]", 
+      RowBox[{"-", "\[CapitalGamma]"}]], 
+     RowBox[{"exp", "(", 
+      FractionBox[
+       RowBox[{"-", "\[Epsilon]"}], 
+       SubscriptBox["\[Epsilon]", "cutoff"]], ")"}]}]}], TraditionalForm]],
+  ExpressionUUID->"fe7bd31b-1149-4d62-bf0a-45158ebf0521"],
+ ". \n\n",
+ StyleBox["Here, we choose to create a flat-spectrum power law (i.e. ", 
+  "InlineFormula"],
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"\[CapitalGamma]", "=", "2"}], TraditionalForm]],ExpressionUUID->
+  "4c5c80d2-b842-449a-811d-7341eeaeea36"],
+ StyleBox[") with a cutoff energy at ", "InlineFormula"],
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    SubscriptBox["\[Epsilon]", "cutoff"], "=", 
+    RowBox[{
+     SuperscriptBox["10", "10"], "GeV"}]}], TraditionalForm]],ExpressionUUID->
+  "5ef5258a-aa12-4d11-93c8-636c5a08e328"],
+ " and a normalization of ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"A", "=", 
+    RowBox[{"3", "\[Times]", 
+     SuperscriptBox["10", "42"], 
+     SuperscriptBox["GeV", " "], 
+     SuperscriptBox[
+      StyleBox["s",
+       FontSlant->"Plain"], 
+      RowBox[{"-", "1"}]]}]}], TraditionalForm]],ExpressionUUID->
+  "45d8cc12-39bf-408d-b02d-cbcb6a767709"],
+ ". This will produce a spectrum with the desired units of ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"[", 
+    RowBox[{
+     SuperscriptBox["GeV", 
+      RowBox[{"-", "1"}]], " ", 
+     SuperscriptBox[
+      StyleBox["s",
+       FontSlant->"Plain"], 
+      RowBox[{"-", "1"}]]}], "]"}], TraditionalForm]],ExpressionUUID->
+  "fe0f9e02-b08b-4aef-828f-ffcbbb5e5201"],
+ "."
+}], "Subsection",
+ CellChangeTimes->{{3.7250388632501087`*^9, 3.725039468597805*^9}, {
+   3.7250395076538506`*^9, 3.72503954927892*^9}, {3.725039588602466*^9, 
+   3.7250397265596952`*^9}, {3.7250397603358994`*^9, 
+   3.7250401997670965`*^9}, {3.725040247823224*^9, 3.7250404604025764`*^9}, {
+   3.72504057844232*^9, 3.725040672703782*^9}, {3.7250407329796443`*^9, 
+   3.7250407470190277`*^9}, {3.7250512846447825`*^9, 
+   3.7250512855042195`*^9}, {3.7253015332624025`*^9, 
+   3.7253015707301064`*^9}, {3.725301646698636*^9, 3.725301816850806*^9}, {
+   3.7314477510660067`*^9, 3.7314477511983323`*^9}, {3.7314479384183035`*^9, 
+   3.7314479391963725`*^9}, {3.7314481011459856`*^9, 
+   3.7314481149055734`*^9}, {3.731448609030835*^9, 3.7314486521775584`*^9}, {
+   3.7314487012470307`*^9, 3.731448713434437*^9}, {3.736551411083213*^9, 
+   3.7365514114003654`*^9}, {3.73655729818155*^9, 3.736557360428014*^9}, {
+   3.7373101280888557`*^9, 3.7373101280898724`*^9}, {3.931533907225857*^9, 
+   3.93153390818185*^9}, {3.9315342475431623`*^9, 3.931534315490334*^9}, {
+   3.931535532451359*^9, 3.93153556620057*^9}, {3.9315355977283993`*^9, 
+   3.931535698992219*^9}, {3.931535758170218*^9, 3.931535760739037*^9}, {
+   3.931535810136139*^9, 3.931535855715192*^9}, {3.931535901608567*^9, 
+   3.931535958475119*^9}, {3.9315360025401917`*^9, 3.931536035960065*^9}, {
+   3.931536120463254*^9, 3.931536269709559*^9}, {3.9315362997665577`*^9, 
+   3.9315365540703783`*^9}, {3.931536585328779*^9, 3.9315366810513163`*^9}, {
+   3.931536720909045*^9, 3.931536722543487*^9}, {3.9315367655536327`*^9, 
+   3.931536777447891*^9}, {3.931536976148314*^9, 3.9315369761487093`*^9}, {
+   3.9315370291962347`*^9, 3.931537029758161*^9}, {3.931537096586513*^9, 
+   3.9315371064961*^9}, {3.931537157355328*^9, 3.931537194797057*^9}, {
+   3.931537460118763*^9, 3.931537477355748*^9}, {3.931537525406621*^9, 
+   3.931537582373335*^9}, {3.931537715073813*^9, 3.931537728148192*^9}, {
+   3.931538810192404*^9, 3.931538827325966*^9}, {3.9315951177370243`*^9, 
+   3.9315951224229927`*^9}, {3.931596150929049*^9, 3.931596151050659*^9}, {
+   3.9315964660598707`*^9, 3.931596474110429*^9}, {3.931611898832839*^9, 
+   3.9316119552872047`*^9}, 3.931612061436811*^9, {3.931612354558092*^9, 
+   3.931612356430643*^9}},
+ CellID->247095694,ExpressionUUID->"1d4eb0a3-2358-404f-b181-7623bf1aea36"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"injSpectrum", "=", 
+    RowBox[{"Table", "[", 
+     RowBox[{
+      RowBox[{"cutoffPowerLaw", "[", 
+       RowBox[{
+        RowBox[{"energies", "[", 
+         RowBox[{"[", "i", "]"}], "]"}], ",", "2.0", ",", 
+        SuperscriptBox["10", "10"], ",", 
+        RowBox[{"3", "*", 
+         SuperscriptBox["10", "42"]}]}], "]"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"i", ",", "1", ",", 
+        RowBox[{"Length", "[", "energies", "]"}]}], "}"}]}], "]"}]}], ";"}], 
+  "\[IndentingNewLine]"}]], "Input",
+ CellLabel->"In[3]:=",
+ CellID->365173223,ExpressionUUID->"7d6444af-79fa-42f7-b257-400a169ed014"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[TextData[{
+ "This injected spectrum can be plotted as an energy spectrum ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    SuperscriptBox["\[Epsilon]", "2"], 
+    FractionBox["dN", "d\[Epsilon]"]}], TraditionalForm]],ExpressionUUID->
+  "e36e2088-e890-4ae8-b044-441d2f46d931"],
+ " using the \[OpenCurlyDoubleQuote]",
+ StyleBox["specPlot", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] function available in \[Gamma]-Cascade. The \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["specPlot", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] functions takes in a spectrum ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    FractionBox["dN", "d\[Epsilon]"], 
+    RowBox[{"(", "\[Epsilon]", ")"}]}], TraditionalForm]],ExpressionUUID->
+  "e4272a7d-9094-43d5-b2c6-d99d61641808"],
+ " (or a flux ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"\[Phi]", "(", "E", ")"}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "ded05811-b419-4865-882c-28ee26351590"],
+ ", given in ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"[", 
+    RowBox[{
+     SuperscriptBox["GeV", 
+      RowBox[{"-", "1"}]], " ", 
+     SuperscriptBox[
+      StyleBox["s",
+       FontSlant->"Plain"], 
+      RowBox[{"-", "2"}]], " ", 
+     SuperscriptBox["cm", 
+      RowBox[{"-", "2"}]]}], "]"}], TraditionalForm]],ExpressionUUID->
+  "2e356a2e-2850-4568-947a-073f9e841784"],
+ " or ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"[", 
+    RowBox[{
+     SuperscriptBox["GeV", 
+      RowBox[{"-", "1"}]], " ", 
+     SuperscriptBox[
+      StyleBox["s",
+       FontSlant->"Plain"], 
+      RowBox[{"-", "2"}]], " ", 
+     SuperscriptBox["cm", 
+      RowBox[{"-", "2"}]], " ", 
+     SuperscriptBox["sr", 
+      RowBox[{"-", "1"}]]}], "]"}], TraditionalForm]],ExpressionUUID->
+  "c9a2d5a6-f596-4962-a869-5d8f483616b0"],
+ ") formatted as above and returns a primitive plot of the energy spectrum ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    SuperscriptBox["\[Epsilon]", "2"], 
+    FractionBox["dN", "d\[Epsilon]"]}], TraditionalForm]],ExpressionUUID->
+  "ba406864-1265-4314-8ef5-0cd12a3c7982"],
+ " ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"[", 
+    RowBox[{"GeV", "  ", 
+     SuperscriptBox[
+      StyleBox["s",
+       FontSlant->"Plain"], 
+      RowBox[{"-", "1"}]]}], "]"}], TraditionalForm]],ExpressionUUID->
+  "eea1606d-af83-4ced-a839-5c6590515f63"],
+ " (or energy flux ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    SuperscriptBox["E", 
+     RowBox[{" ", "2"}]], 
+    RowBox[{"\[Phi]", "(", "E", ")"}]}], TraditionalForm]],ExpressionUUID->
+  "ccae1944-1f4e-477c-9f0d-24126d993155"],
+ ", in ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"[", 
+    RowBox[{"GeV", "  ", 
+     SuperscriptBox[
+      StyleBox["s",
+       FontSlant->"Plain"], 
+      RowBox[{"-", "1"}]], " ", 
+     SuperscriptBox["cm", 
+      RowBox[{"-", "2"}]]}], "]"}], TraditionalForm]],ExpressionUUID->
+  "6a333c93-0839-44e9-81a8-16cdda5d6587"],
+ " or ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"[", 
+    RowBox[{"GeV", "  ", 
+     SuperscriptBox[
+      StyleBox["s",
+       FontSlant->"Plain"], 
+      RowBox[{"-", "1"}]], " ", 
+     SuperscriptBox["cm", 
+      RowBox[{"-", "2"}]], " ", 
+     SuperscriptBox["sr", 
+      RowBox[{"-", "1"}]]}], "]"}], TraditionalForm]],ExpressionUUID->
+  "e26eaa48-4142-4bcf-a50a-f983c7bb6dba"],
+ "). The ",
+ Cell[BoxData[
+  FormBox["x", TraditionalForm]],ExpressionUUID->
+  "d3819fc0-c281-4a8a-a0b9-8809856065dd"],
+ "-axis always represents energy in GeV."
+}], "Subsection",
+ CellChangeTimes->{{3.72504153273925*^9, 3.725041556804247*^9}, {
+   3.725042754584958*^9, 3.72504277697338*^9}, {3.725042811100725*^9, 
+   3.725042931901696*^9}, {3.7250429708202333`*^9, 3.7250430434956713`*^9}, {
+   3.7250434410691338`*^9, 3.725043447196072*^9}, {3.7250434902875867`*^9, 
+   3.7250435304787207`*^9}, {3.725301892935851*^9, 3.7253019350774665`*^9}, 
+   3.7314477513266735`*^9, {3.931536831962397*^9, 3.931536880771138*^9}, {
+   3.931536915770536*^9, 3.9315369240979223`*^9}, {3.931537217542364*^9, 
+   3.931537231296626*^9}, {3.931537288429113*^9, 3.9315372935950603`*^9}, {
+   3.9315373944199257`*^9, 3.931537443654447*^9}, {3.931537757440589*^9, 
+   3.931537896585416*^9}, {3.931537934258717*^9, 3.9315380042789307`*^9}, {
+   3.931538044674733*^9, 3.93153806187683*^9}, {3.931595351474222*^9, 
+   3.9315953950451403`*^9}, {3.9316119681130047`*^9, 3.931612046721245*^9}, {
+   3.931612078075562*^9, 3.9316121254080057`*^9}, {3.931612200899621*^9, 
+   3.93161232612068*^9}},
+ CellID->113528703,ExpressionUUID->"2ee5e24e-d971-4a4b-bee3-777c62a0373f"],
+
+Cell[BoxData[
+ RowBox[{"injectedPlot", "=", 
+  RowBox[{"specPlot", "[", "injSpectrum", "]"}]}]], "Input",
+ CellID->1765046269,ExpressionUUID->"df13dc8a-2e54-4a0c-8d4a-99ccad179e1d"]
+}, Open  ]],
+
+Cell[TextData[{
+ "Note: throughout this notebook, we will make explicit distinction between \
+energies at the source(s), represented by \[OpenCurlyDoubleQuote]\[Epsilon] \
+\[CloseCurlyDoubleQuote], and energies at redshift zero, represented by \
+\[OpenCurlyDoubleQuote]",
+ Cell[BoxData[
+  FormBox["E", TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "878aaa0e-89e1-44a2-8c6d-903635c97f41"],
+ "\[CloseCurlyDoubleQuote]."
+}], "Subsection",
+ CellChangeTimes->{{3.72504153273925*^9, 3.725041556804247*^9}, {
+   3.725042754584958*^9, 3.72504277697338*^9}, {3.725042811100725*^9, 
+   3.725042931901696*^9}, {3.7250429708202333`*^9, 3.7250430434956713`*^9}, {
+   3.7250434410691338`*^9, 3.725043447196072*^9}, {3.7250434902875867`*^9, 
+   3.7250435304787207`*^9}, {3.725301892935851*^9, 3.7253019350774665`*^9}, 
+   3.7314477513266735`*^9, {3.931536831962397*^9, 3.931536880771138*^9}, {
+   3.931536915770536*^9, 3.9315369240979223`*^9}, {3.931537217542364*^9, 
+   3.931537231296626*^9}, {3.931537288429113*^9, 3.9315372935950603`*^9}, {
+   3.9315373944199257`*^9, 3.931537443654447*^9}, {3.931537757440589*^9, 
+   3.931537896585416*^9}, {3.931537934258717*^9, 3.9315380042789307`*^9}, {
+   3.931538044674733*^9, 3.93153806187683*^9}, {3.931595351474222*^9, 
+   3.9315953950451403`*^9}, {3.9316119681130047`*^9, 3.931612046721245*^9}, {
+   3.931612078075562*^9, 3.9316121254080057`*^9}, {3.931612200899621*^9, 
+   3.931612316307766*^9}},
+ CellID->687932137,ExpressionUUID->"5d549927-df09-4022-9bc8-cc91e45a1945"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Redshifting", "Section",
+ CellChangeTimes->{{3.7250388363018703`*^9, 3.725038841349275*^9}, {
+  3.9315380816884623`*^9, 3.931538082983526*^9}, {3.9316077132521667`*^9, 
+  3.931607741361475*^9}, {3.931609358975676*^9, 3.931609365979066*^9}},
+ CellID->728503807,ExpressionUUID->"b684b95c-bb7e-4f0c-8e84-41d953454be3"],
+
+Cell[CellGroupData[{
+
+Cell[TextData[{
+ "The simplest problem that can be tackled in \[Gamma]-Cascade is that of \
+cosmological gamma-ray transport in the absence of interactions (i.e. \
+assuming gamma rays are only susceptible to cosmological redshifting \
+effects). This problem can in fact be solved analytically: the redshifted \
+flux \[Phi](E) observed at the Earth from a point source at redshift ",
+ Cell[BoxData[
+  FormBox["z", TraditionalForm]],ExpressionUUID->
+  "f4be936a-2213-488d-9adf-522bf9f03775"],
+ " emitting a spectrum ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    FractionBox["dN", "d\[Epsilon]"], 
+    RowBox[{"(", "\[Epsilon]", ")"}]}], TraditionalForm]],ExpressionUUID->
+  "e9f94f70-1521-43fa-a63d-ae915e7450d3"],
+ " is ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    RowBox[{"\[Phi]", "(", "E", ")"}], "=", 
+    FractionBox[
+     RowBox[{
+      RowBox[{
+       FractionBox["dN", "d\[Epsilon]"], 
+       RowBox[{"(", "\[Epsilon]", ")"}]}], 
+      SubscriptBox["|", 
+       RowBox[{"\[Epsilon]", "=", 
+        RowBox[{"E", "(", 
+         RowBox[{"1", "+", "z"}], ")"}]}]]}], 
+     RowBox[{"4", "\[Pi]", " ", 
+      RowBox[{
+       SubsuperscriptBox["d", "c", 
+        RowBox[{" ", "2"}]], "(", "z", ")"}]}]]}], TraditionalForm]],
+  ExpressionUUID->"a86d2917-2298-41a4-a7cc-3e3eb2ee6f54"],
+ ", where ",
+ Cell[BoxData[
+  FormBox[
+   SubscriptBox["d", "c"], TraditionalForm]],ExpressionUUID->
+  "ce58ccd3-8441-47f3-b2df-8013ff47b5c8"],
+ " is the comoving distance.\n\n\[Gamma]-Cascades tackles this problem \
+numerically with the \[OpenCurlyDoubleQuote]",
+ StyleBox["RedshiftPoint", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] function. \[OpenCurlyDoubleQuote]",
+ StyleBox["RedshiftPoint[", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ Cell[BoxData[
+  FormBox[
+   FractionBox["dN", "d\[Epsilon]"], TraditionalForm]],ExpressionUUID->
+  "a5826bca-feab-4f73-b55f-d10f9be9bbc8"],
+ StyleBox[", ", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ Cell[BoxData[
+  FormBox["z", TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "d977ba97-7bd9-46aa-b3cd-f6e4ebeeef97"],
+ StyleBox["]", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] takes in an injection spectrum ",
+ Cell[BoxData[
+  FormBox[
+   FractionBox["dN", "d\[Epsilon]"], TraditionalForm]],ExpressionUUID->
+  "8db6041b-d99d-4430-a8a6-c262b904b0f0"],
+ ", in ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"[", 
+    RowBox[{
+     SuperscriptBox["GeV", 
+      RowBox[{"-", "1"}]], " ", 
+     SuperscriptBox[
+      StyleBox["s",
+       FontSlant->"Plain"], 
+      RowBox[{"-", "1"}]]}], "]"}], TraditionalForm]],ExpressionUUID->
+  "6d9e3759-bfb6-4438-abd0-c042bf7eecfd"],
+ ", formatted as the one above, and a starting redshift ",
+ Cell[BoxData[
+  FormBox["z", TraditionalForm]],ExpressionUUID->
+  "41c0d374-0c2e-4af7-a552-c5a39e127630"],
+ " where the point source is located. The maximum redshift allowed in \
+\[Gamma]-Cascade is ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"z", "=", "10"}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "679b00a7-5915-4000-a288-6629ed63e025"],
+ ". After redshifting this spectrum incrementally all the way to ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"z", "=", "0"}], TraditionalForm]],ExpressionUUID->
+  "3b2ac347-dddd-4a27-978c-4025a787d1d1"],
+ ", the function then returns a redshifted flux \[Phi], in ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"[", 
+    RowBox[{
+     SuperscriptBox["GeV", 
+      RowBox[{"-", "1"}]], " ", 
+     SuperscriptBox[
+      StyleBox["s",
+       FontSlant->"Plain"], 
+      RowBox[{"-", "2"}]], " ", 
+     SuperscriptBox["cm", 
+      RowBox[{"-", "2"}]]}], "]"}], TraditionalForm]],ExpressionUUID->
+  "66523480-ef03-4cb9-ace2-950c241fcb27"],
+ ", as a list of length 300 evaluated at each of the energies in the \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["energies", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] array.\n\nIn the simulation below, we assign the \
+variable \[OpenCurlyDoubleQuote]",
+ StyleBox["redshiftedFlux", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] to the output of the function \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["RedshiftPoint", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote]. The point source is assumed to emit the same \
+cutoff power-law spectrum as defined in \[OpenCurlyDoubleQuote]",
+ StyleBox["injSpectrum", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote], and be located at redshift ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"z", "=", "0.01"}], TraditionalForm]],ExpressionUUID->
+  "1a7ed91e-716d-452e-a29f-b08a65b2bca5"],
+ ". The function \[OpenCurlyDoubleQuote]",
+ StyleBox["AbsoluteTiming", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] return the amount of time it took your computer to \
+complete the last command; in this case, evaluating \[OpenCurlyDoubleQuote]",
+ StyleBox["RedshiftPoint", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] out to ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"z", "=", "0.01"}], TraditionalForm]],ExpressionUUID->
+  "1b32087b-bd73-4514-91d5-d31e0370353e"],
+ "."
+}], "Subsection",
+ CellChangeTimes->CompressedData["
+1:eJwl0mtIkwEUBuC1ZNrQFSO1m6UZaprSpGKNRDcVbZLXnDNnqy9NpMtQpxiV
+UTqKWlZaQWZFNc0L6rRyWmgzTEjLOQlvXVhW83PTYEtsiEnf+/nj8Px44f1x
+zvEhFMnZTAaDIaAG/mSQj+16q5DvUzkLpTNKO7TM1P2FOTGVi5A1bXT7Q6l9
+w+ZCjtoRCyfSFuIh+V2dC8/5xxdDQuVRBsPTH12DpvtHrsPVT263OShvbdXS
+VmXX/cjvsQpdMtNIKMgYscHBvRudCyhfbZp0BH20CrukZtpu4sCaHZQtscdp
+LY2abbBwQeYHqxa9s+CNZlUubJp6poCkOTgPNtcTS1MjVuGA4SStyBD9zUIp
+bnMzQ3KUWXRozCrcZ1qWL8gRD4pnhTqjivbuUZsSGrWK8/BKXrm7gZJ7om89
+dE3QeUGRXh4IT+W/40FerWcojMiI4sOJyfkwSJx5HgmDdxnEdL4/KZHOO0oO
+woVhjhy+fNGeBzWXiwvh1QjRHShTBd6jezQ+NdDs4dUAw7OSaGW61hbonRrS
+Cv91O/VDwdtly2Nqh+BnUQetrpc7Dt1MCRNw/HCjCZZcTP8FyQ+lrCFKMdHo
+AtkrmzhQZh9wh00ywg/+63IKgCpNjQSusKjS4aVOqauRMnQujgN3vg7iwrIC
+fTRMXrIkwZsZvgTsj7KwLJT2+gerIHv6iwQqe59KYdm8Ux8MUde/hwH8PWtn
+KDd/qvGDIQ8DeDBrujMWqovkKXBG6SyBfHJLJhRtiJBDZcP2Y7Ai9Gs+TOWd
+LYaM3YUXYHkF0zaLPfR40iaWRDN/4049kWyo7S1ImaOMC2NK4Fj1UhUcFfpX
+wz7FYjss1Z/WQREpM0CWrXsYriut8J3HXzk0tP8Bofr96g==
+  "],
+ CellID->1008529967,ExpressionUUID->"7adb2181-75e1-4964-8932-68f07fd9fa79"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"redshiftedFlux", "=", 
+    RowBox[{"RedshiftPoint", "[", 
+     RowBox[{"injSpectrum", ",", "0.01"}], "]"}]}], ";"}], "//", 
+  "AbsoluteTiming"}], "\[IndentingNewLine]", 
+ RowBox[{"redshiftedFluxPlot", "=", 
+  RowBox[{"specPlot", "[", "redshiftedFlux", "]"}]}]}], "Input",
+ CellChangeTimes->{{3.7250441505316086`*^9, 3.7250441922157307`*^9}, {
+   3.7250445983914747`*^9, 3.725044609740526*^9}, {3.7250513457096996`*^9, 
+   3.7250513618380384`*^9}, {3.72505651425535*^9, 3.7250565166770134`*^9}, 
+   3.7250565617911453`*^9, {3.7251266500031776`*^9, 3.725126665629589*^9}, {
+   3.7252877500438457`*^9, 3.7252877506376576`*^9}, {3.7252877957209616`*^9, 
+   3.7252878176138735`*^9}, {3.725287858860445*^9, 3.725287867611821*^9}, {
+   3.725300002966832*^9, 3.7253000642189293`*^9}, {3.725300825542116*^9, 
+   3.7253008266319284`*^9}, 3.72576629672971*^9, {3.7258099974622116`*^9, 
+   3.72581003965847*^9}, {3.7258101387641582`*^9, 3.7258101942568274`*^9}, {
+   3.7258102928731985`*^9, 3.725810293281285*^9}, {3.725810365344023*^9, 
+   3.7258103654934216`*^9}, {3.725810468639865*^9, 3.7258104691261587`*^9}, {
+   3.726855764590152*^9, 3.7268557652937813`*^9}, {3.726856175662981*^9, 
+   3.726856186062049*^9}, {3.726946067493178*^9, 3.7269460740875206`*^9}, 
+   3.726946256082839*^9, {3.7269462897122*^9, 3.7269463210622563`*^9}, 
+   3.726946354902505*^9, {3.726946434584944*^9, 3.726946444206645*^9}, 
+   3.7269474088175383`*^9, 3.7269483134141464`*^9, {3.7299126189133043`*^9, 
+   3.7299126509760394`*^9}, {3.72991308184824*^9, 3.7299130848108325`*^9}, 
+   3.731157345136074*^9, {3.731157490159683*^9, 3.7311575613289175`*^9}, {
+   3.731342743242218*^9, 3.7313427462662587`*^9}, {3.7313451863219557`*^9, 
+   3.731345189876407*^9}, {3.7313452235599694`*^9, 3.731345224113441*^9}, {
+   3.73141306789579*^9, 3.7314130985462694`*^9}, 3.7314485338619657`*^9, 
+   3.735844132042153*^9, {3.736553347712222*^9, 3.736553348058297*^9}, 
+   3.751163483557233*^9, {3.7511638091207867`*^9, 3.751163938393681*^9}, 
+   3.751164048420925*^9, {3.7511641858863*^9, 3.751164198016148*^9}, 
+   3.751164741118937*^9, {3.7511647732066383`*^9, 3.751164773448927*^9}, {
+   3.751165037335339*^9, 3.7511650775693007`*^9}, {3.7511651089325457`*^9, 
+   3.751165109656705*^9}, {3.931595786637417*^9, 3.931595795194577*^9}, {
+   3.931596238621632*^9, 3.9315962497474194`*^9}, {3.931615511283864*^9, 
+   3.9316155258829603`*^9}},
+ CellLabel->"In[4]:=",
+ CellID->1961883585,ExpressionUUID->"10f53e9e-e254-4837-9357-6ddc479591e6"]
+}, Open  ]],
+
+Cell[TextData[{
+ "Note: Although non-interacting cosmological propagation is unphysical for \
+\[GreaterTilde] 100 GeV gamma rays, \[OpenCurlyDoubleQuote]",
+ StyleBox["RedshiftPoint", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] can be used as a useful cross-check (or to \
+simulate neutrino propagation!)."
+}], "Subsection",
+ CellChangeTimes->CompressedData["
+1:eJwlzGtIUwEAxfFlQ23oiqFGD0srlmlKGxZLCr1LcS3StNSZs9VtZlIx1CmL
+yqgcvZY9tCCjoprmA589poVmYUJazkVYrgfLal7vNsoVNkyle64fDr8Pfzih
+pCY1x4vD4UQzg9851B13l4OQhJa7oMKpdUPaWfMX5iaWT0LvUYv/b8bmZzwB
+5Bs8MmjNmEiC1FdDHjy6MkkHSX1QKYzNvH0e2m7svgDn3q1o9TBeXtbMWplT
+863guYPwzc6gYEzW4BjsX7/Ip5DxyeJhT8QbB9GhsLN2klvnrWZsku1jpeuN
+K2DRhFIIKydD1PBioz4PNozc10DKHpkPG2vJ6ZFBB9FnPsgqNSd8oRnlrf52
+SL33Kt75wUFssM0oicmV98tdhMmiZ722Z0wLLc2aY/BMflmgmVFwoGcB9Es2
+BUNplyocHip4KYKi6vliGJcVL4HW4fGNkDz8YBOMjDbL2b45ZRvb20p2wIm3
+fBV89PBxPjSe1hXBc3HSq1CpD7/O/hhDq6A9KLgOxqpTWJWmliYYkhbVAqc6
+ub0w5sWMZYnVA/CjtI3V1C0Ygv62ZCsc2lVvgyUnMn9A6vUp7wFGOVnvC3mz
+G/hQ6e4LhA1KUginOrhhUG+sSoezaH0mPNmu8LMwiv9s4cM1TyMEsLSwKwGm
+TtMp8FLWchL2xtPeNKO79uYcyBv9lA613fcUsHSc2wOjDLWvYJhkXYCTccm7
+KiGMuhUmgurRdhk0FKu2Q6fWJx1KqKXZULowTgW1dav2wivizwUwTXREBzlr
+i47D/dx/P12MAa1nf8H/jTDHzQ==
+  "],
+ CellID->1317283503,ExpressionUUID->"374c8e1d-6e52-49bf-b065-4e70622f1f36"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Attenuation", "Section",
+ CellChangeTimes->{{3.725041341585208*^9, 3.725041343871314*^9}, {
+   3.9316077101633797`*^9, 3.931607710375018*^9}, 3.931609376109104*^9},
+ CellID->297973296,ExpressionUUID->"552e248b-1b24-46de-8cea-36906612dac6"],
+
+Cell[CellGroupData[{
+
+Cell[TextData[{
+ "Suppose you now want to calculate the resulting spectrum due to attenuation \
+of some point source spectrum due to pair production during cosmological \
+transport. To attenuate the injected spectrum, you can use the \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["AttenuatePoint", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] function. \[OpenCurlyDoubleQuote]",
+ StyleBox["AttenuatePoint[", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ Cell[BoxData[
+  FormBox[
+   FractionBox["dN", "d\[Epsilon]"], TraditionalForm]],ExpressionUUID->
+  "6e532f4a-275d-4a7f-8db5-e15c85b87e0f"],
+ StyleBox[",", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ StyleBox[" ", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ Cell[BoxData[
+  FormBox["z", TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "e25693a7-8285-48d4-82bb-eee2f8c513d2"],
+ StyleBox["]", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] takes in a gamma-ray injected spectrum, and \
+starting redshift ",
+ Cell[BoxData[
+  FormBox["z", TraditionalForm]],ExpressionUUID->
+  "66e88219-88db-4b7b-a028-e2f5d30315bd"],
+ ", and produces an attenuated flux ",
+ Cell[BoxData[
+  FormBox["\[Phi]", TraditionalForm]],ExpressionUUID->
+  "a837121a-893c-424b-b696-068b9395bb9a"],
+ ", in ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"[", 
+    RowBox[{
+     SuperscriptBox["GeV", 
+      RowBox[{"-", "1"}]], 
+     SuperscriptBox["cm", 
+      RowBox[{"-", "2"}]], " ", 
+     SuperscriptBox[
+      StyleBox["s",
+       FontSlant->"Plain"], 
+      RowBox[{"-", "1"}]]}], "]"}], TraditionalForm]],ExpressionUUID->
+  "92f10902-2cd3-451b-a15e-a0de3bbb46fc"],
+ ", without including cascade evolution, but taking into account cosmological \
+energy shifts.\n\nBelow, the variable, \[OpenCurlyDoubleQuote]",
+ StyleBox["attenuatedFlux", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] is assigned the output list of the function \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["AttenuatePoint", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote]. \[OpenCurlyDoubleQuote]",
+ StyleBox["AttenuatePoint", "Input",
+  FontFamily->"Source Code Pro",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] is passed \[OpenCurlyDoubleQuote]",
+ StyleBox["injSpectrum", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] as the injection spectrum and ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"z", "=", "0.01"}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "e5408360-712e-4cc8-8461-790a7d68f16a"],
+ " as the source\[CloseCurlyQuote]s redshift",
+ StyleBox[".", "Input",
+  FontFamily->"Gill Sans MT",
+  FontSize->18,
+  FontWeight->"Plain"]
+}], "Subsection",
+ CellChangeTimes->{{3.7250413616263323`*^9, 3.725041422814145*^9}, {
+   3.7250435514510345`*^9, 3.725043571630541*^9}, {3.725043645012355*^9, 
+   3.72504366497206*^9}, {3.725043695617957*^9, 3.725043796269067*^9}, {
+   3.7250438458285823`*^9, 3.725043925613713*^9}, {3.725043966623836*^9, 
+   3.7250440103334866`*^9}, {3.7250440443258224`*^9, 3.725044139909415*^9}, {
+   3.7250505054266157`*^9, 3.725050629355074*^9}, {3.725050813455267*^9, 
+   3.72505083367579*^9}, {3.7250508855545835`*^9, 3.725051106596771*^9}, {
+   3.725051154134431*^9, 3.7250512266847167`*^9}, {3.725286321992442*^9, 
+   3.7252863943906393`*^9}, {3.7253019728632755`*^9, 3.725302057671161*^9}, {
+   3.7314131549033575`*^9, 3.7314131794546385`*^9}, 3.731449295783868*^9, {
+   3.751164946321498*^9, 3.7511650253323193`*^9}, {3.751165118162408*^9, 
+   3.751165135147047*^9}, {3.751165360478271*^9, 3.751165393129842*^9}, 
+   3.7511655297359943`*^9, {3.751165610469295*^9, 3.75116577079191*^9}, {
+   3.7511658009914722`*^9, 3.751165801208329*^9}, {3.751165836755527*^9, 
+   3.751165873636251*^9}, {3.751166274082322*^9, 3.751166274442561*^9}, {
+   3.7511663055001698`*^9, 3.751166322271266*^9}, {3.9315962888536463`*^9, 
+   3.931596424983234*^9}, {3.931598752573455*^9, 3.931598834423327*^9}, 
+   3.9315989358663807`*^9, {3.9316078502113523`*^9, 3.931607850570766*^9}, {
+   3.93161186138984*^9, 3.931611865915132*^9}, 3.931612400279132*^9, {
+   3.931615531927167*^9, 3.931615532392189*^9}},
+ CellID->22936097,ExpressionUUID->"77684371-9601-4f15-a172-4f3a6dfe6f1f"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"attenuatedFlux", "=", 
+    RowBox[{"AttenuatePoint", "[", 
+     RowBox[{"injSpectrum", ",", "0.01"}], "]"}]}], ";"}], "//", 
+  "AbsoluteTiming"}], "\[IndentingNewLine]", 
+ RowBox[{"attenuatedFluxPlot", "=", 
+  RowBox[{"specPlot", "[", "attenuatedFlux", "]"}]}]}], "Input",
+ CellID->1668350599,ExpressionUUID->"d2757d06-9d8a-477c-b90a-419da2d36e4e"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Full Electromagnetic Cascades", "Section",
+ CellChangeTimes->{{3.7250514615193005`*^9, 3.7250514691919875`*^9}, {
+  3.725304414332052*^9, 3.725304429293392*^9}, {3.9316076952913933`*^9, 
+  3.931607697566947*^9}, {3.9316093801861477`*^9, 3.9316093827129517`*^9}},
+ CellID->243349693,ExpressionUUID->"d3b1490f-87f5-4c93-9b68-d9be7e957961"],
+
+Cell[CellGroupData[{
+
+Cell[TextData[{
+ "Now, lets consider the full cascade development during the transport of \
+gamma-rays from the same point source as in the example above. To calculate \
+the spectrum after cascade development, including attenuation via pair \
+production and gamma-ray regeneration through inverse Compton scattering, you \
+can use the \[OpenCurlyDoubleQuote]",
+ StyleBox["CascadePoint", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote].  ",
+ "\[OpenCurlyDoubleQuote]",
+ StyleBox["CascadePoint[", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ Cell[BoxData[
+  FormBox[
+   FractionBox["dN", "d\[Epsilon]"], TraditionalForm]],ExpressionUUID->
+  "969bac4a-9c55-4457-8479-9b9181f36901"],
+ StyleBox[", ", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ Cell[BoxData[
+  FormBox["z", TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "ed60f2cf-4ef0-4479-b815-511a1a9ebb23"],
+ StyleBox["]", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] ",
+ "is a function which takes in a gamma-ray injected spectrum, and source \
+redshift, and produces a cascaded flux ",
+ Cell[BoxData[
+  FormBox["\[Phi]", TraditionalForm]],ExpressionUUID->
+  "e0b87ee9-cc17-434f-8249-ddb9cc7246a7"],
+ " in ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"[", 
+    RowBox[{
+     SuperscriptBox["GeV", 
+      RowBox[{"-", "1"}]], 
+     SuperscriptBox["cm", 
+      RowBox[{"-", "2"}]], " ", 
+     SuperscriptBox[
+      StyleBox["s",
+       FontSlant->"Plain"], 
+      RowBox[{"-", "1"}]]}], "]"}], TraditionalForm]],ExpressionUUID->
+  "ca2b3bc7-81d0-4438-acf1-aa35e5fef901"],
+ ", taking into account cosmological and electromagnetic energy losses. The \
+injected differential spectrum ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"(", 
+    FractionBox["dN", "d\[Epsilon]"], ")"}], TraditionalForm]],ExpressionUUID->
+  "ed0ac03d-a463-458d-bcf6-07192b70da8b"],
+ " should be formatted just as in the previous cases.\n\nBelow, the variable, \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["pointSourceFlux", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] is assigned the output list of the function \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["CascadePoint", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote], which receives the same injection spectrum and \
+initial redshift inputs as the previous simulations. The attenuated spectrum \
+is then overlaid to highlight the effect of gamma-ray regeneration in \
+cascades."
+}], "Subsection",
+ CellChangeTimes->{{3.725052707973753*^9, 3.7250527375589714`*^9}, {
+   3.7250528464457674`*^9, 3.725052847117523*^9}, {3.725052895068542*^9, 
+   3.725052977265681*^9}, {3.7250553273517904`*^9, 3.725055340556327*^9}, {
+   3.7250553745754757`*^9, 3.725055375341176*^9}, {3.7250554826493034`*^9, 
+   3.725055541357113*^9}, {3.725056079100033*^9, 3.7250561057903404`*^9}, {
+   3.7250561367940245`*^9, 3.725056139012768*^9}, {3.72505621314529*^9, 
+   3.7250562843402357`*^9}, {3.72505631884388*^9, 3.7250563191251154`*^9}, {
+   3.725056380678432*^9, 3.7250564148543425`*^9}, {3.7250567825797205`*^9, 
+   3.725056812760852*^9}, {3.725056844120059*^9, 3.725056940387824*^9}, {
+   3.725057306956557*^9, 3.725057315034707*^9}, {3.7252864103612857`*^9, 
+   3.7252864192370157`*^9}, {3.725302108898698*^9, 3.725302124750896*^9}, {
+   3.725302161468994*^9, 3.72530216733508*^9}, {3.725302985826969*^9, 
+   3.7253030041572113`*^9}, {3.7253045190476665`*^9, 
+   3.7253045192100887`*^9}, {3.7314132159778614`*^9, 
+   3.7314132271605945`*^9}, {3.7314132977803693`*^9, 3.7314133043337946`*^9}, 
+   3.7314477514600515`*^9, {3.7314492815309696`*^9, 3.7314492880432854`*^9}, 
+   3.7365574299200883`*^9, {3.737467188052978*^9, 3.7374671934624305`*^9}, {
+   3.7374672698489623`*^9, 3.7374672906252947`*^9}, {3.751165919273855*^9, 
+   3.751166009286096*^9}, 3.751166039312459*^9, {3.751166084569523*^9, 
+   3.751166111364891*^9}, {3.75116614292492*^9, 3.75116622840024*^9}, {
+   3.867767119010214*^9, 3.86776712898238*^9}, {3.931607770405957*^9, 
+   3.931607971599677*^9}, {3.9316080203324347`*^9, 3.9316080538071957`*^9}, {
+   3.931609199832008*^9, 3.931609270989683*^9}, 3.931611872763914*^9, {
+   3.931612410221047*^9, 3.931612507837268*^9}, {3.931615551973584*^9, 
+   3.9316155916341543`*^9}},
+ CellID->79685355,ExpressionUUID->"b514389b-3819-4c09-957c-80e55adefe77"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"pointSourceFlux", "=", 
+    RowBox[{"CascadePoint", "[", 
+     RowBox[{"injSpectrum", ",", "0.01"}], "]"}]}], ";"}], "//", 
+  "AbsoluteTiming"}], "\[IndentingNewLine]", 
+ RowBox[{"pointSourceFluxPlot", "=", 
+  RowBox[{"specPlot", "[", "pointSourceFlux", "]"}]}], "\[IndentingNewLine]", 
+ RowBox[{"Show", "[", 
+  RowBox[{"pointSourceFluxPlot", ",", "attenuatedFluxPlot"}], "]"}]}], "Input",
+ CellID->1914850350,ExpressionUUID->"8355ee64-a52f-4928-93d7-ae4ec459d334"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[TextData[StyleBox["Diffuse Gamma-Ray Background from a Population of \
+Sources", "Chapter"]], "Section",
+ CellChangeTimes->{{3.7250385749957128`*^9, 3.725038588042203*^9}, {
+  3.725038781971844*^9, 3.725038783550283*^9}, {3.931609347799872*^9, 
+  3.931609350134377*^9}, {3.931609407524856*^9, 3.931609424134156*^9}},
+ CellID->950667981,ExpressionUUID->"d4d76043-ce76-4a4f-b11a-aeaede15d91b"],
+
+Cell[CellGroupData[{
+
+Cell["Non-evolving  Population of Sources", "Section",
+ CellChangeTimes->{{3.7250570571679015`*^9, 3.725057085071234*^9}, {
+   3.7253045837930994`*^9, 3.725304602055767*^9}, {3.75122249701081*^9, 
+   3.751222501861668*^9}, 3.9316094830567007`*^9},
+ CellID->20797861,ExpressionUUID->"e2ee105f-5f8e-4c81-9f05-598ef6ca1163"],
+
+Cell[CellGroupData[{
+
+Cell[TextData[{
+ "\[Gamma]-Cascade is also able to simulate the gamma-ray transport from a \
+population of diffuse emitters. Consider first the case of non-evolving \
+sources, that is, identical sources with intrinsic injection spectra ",
+ Cell[BoxData[
+  FormBox[
+   FractionBox["dN", "d\[Epsilon]"], TraditionalForm]],ExpressionUUID->
+  "7ee105ae-aeec-45d1-b303-9af1fa45eff1"],
+ " that are independent of redshift. In this scenario, the luminosity \
+function is assumed to be a separable function: ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    RowBox[{
+     FractionBox["dN", 
+      RowBox[{"d\[Epsilon]", " ", 
+       SubscriptBox["dV", "c"]}]], 
+     RowBox[{"(", 
+      RowBox[{
+       SubscriptBox["E", "\[Gamma]"], ",", "z"}], ")"}]}], "=", 
+    RowBox[{
+     FractionBox["dN", "d\[Epsilon]"], 
+     RowBox[{"(", "\[Epsilon]", ")"}], 
+     RowBox[{"\[Rho]", "(", "z", ")"}]}]}], TraditionalForm]],ExpressionUUID->
+  "347a1a9d-a48a-4446-9fb7-d441b0e47b83"],
+ ", where ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"\[Rho]", "(", "z", ")"}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "69b1a519-bf09-400f-a64a-b10a06c5925c"],
+ " is the comoving density distribution of sources with redshift ",
+ Cell[BoxData[
+  FormBox["z", TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "cd2ee498-ea06-4365-9bd3-2a40584b0cb1"],
+ ". The injection spectrum must be formatted just like in all previous \
+simulations, as a list of length 300 evaluated at each entry in the \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["energies", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] array. Meanwhile, the distribution of sources \
+should be formatted as a list of ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"\[Rho]", "(", "z", ")"}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "87919944-a5d2-4909-a9dd-8669f8a81314"],
+ ", in ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"[", 
+    SuperscriptBox["cm", 
+     RowBox[{"-", "3"}]], "]"}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "5826a996-2ef0-4265-aa4b-84626493ada2"],
+ ",  evaluated at each of the 1036 redshifts in the \[OpenCurlyDoubleQuote]",
+ StyleBox["diffuseDistances", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] array. \[OpenCurlyDoubleQuote]",
+ StyleBox["diffuseDistances", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] is a list of ",
+ Cell[BoxData[
+  FormBox["z", TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "3ab4a4da-7c8a-4955-8328-ebf1101babe8"],
+ "-values used by \[Gamma]-Cascade to separate propagation into fine redshift \
+steps from ",
+ Cell[BoxData[
+  FormBox[
+   SuperscriptBox["10", 
+    RowBox[{"-", "6"}]], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "fd397548-410e-4101-bae2-2e1c240a6a44"],
+ " to 10.\n\nHere, we choose to distribute sources with comoving density ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    RowBox[{"\[Rho]", "(", "z", ")"}], "=", 
+    RowBox[{"5.0", "\[Times]", 
+     SuperscriptBox["10", 
+      RowBox[{"-", "6"}]], "\[Times]", 
+     SuperscriptBox[
+      RowBox[{"(", 
+       RowBox[{"1", "+", "z"}], ")"}], 
+      RowBox[{"-", "2"}]]}]}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "7d16c1fb-45b5-432c-b0fc-026fe8a5bad0"],
+ " ",
+ Cell[BoxData[
+  FormBox[
+   SuperscriptBox["Mpc", 
+    RowBox[{"-", "3"}]], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "c8d996f2-5780-4916-ad10-a822a9c65565"],
+ ". The quantity \[OpenCurlyDoubleQuote]",
+ StyleBox["megaparsec", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] serves to convert ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"\[Rho]", "(", "z", ")"}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "c57ff598-bd30-42f2-8e52-971fcfc330ed"],
+ " to the desired units of ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"[", 
+    SuperscriptBox["cm", 
+     RowBox[{"-", "3"}]], "]"}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "d5c42e1f-45ca-4c18-a0a4-5625f5c2c255"],
+ "."
+}], "Subsection",
+ CellChangeTimes->{{3.7250571186807013`*^9, 3.725057292375537*^9}, {
+   3.7250573252276497`*^9, 3.7250573411442385`*^9}, 3.7250593741062*^9, {
+   3.725122223641325*^9, 3.7251223610563045`*^9}, {3.7251223911045084`*^9, 
+   3.7251228880855083`*^9}, {3.725122946278465*^9, 3.7251232806431646`*^9}, {
+   3.725123313620189*^9, 3.7251233197143793`*^9}, {3.725123445730384*^9, 
+   3.725123447045088*^9}, {3.7251234863076363`*^9, 3.7251238217307067`*^9}, {
+   3.725123863970313*^9, 3.725123988346312*^9}, {3.7252864300818615`*^9, 
+   3.7252864405829587`*^9}, {3.7253023020691557`*^9, 3.725302347074763*^9}, 
+   3.7253023998798127`*^9, {3.725303092537721*^9, 3.7253030937065372`*^9}, {
+   3.7253046322090282`*^9, 3.725304663413898*^9}, {3.7258038463758593`*^9, 
+   3.7258038486468744`*^9}, {3.72580389147686*^9, 3.725804323523389*^9}, {
+   3.725804377902076*^9, 3.725804627711749*^9}, {3.7258047434105916`*^9, 
+   3.7258047777439775`*^9}, {3.725804858734436*^9, 3.725804858900879*^9}, {
+   3.7258051538466744`*^9, 3.7258052331356134`*^9}, {3.7258052808505697`*^9, 
+   3.725805362394535*^9}, {3.725805407092487*^9, 3.725805683106861*^9}, {
+   3.725805715216296*^9, 3.725805941733996*^9}, {3.7258060303628125`*^9, 
+   3.7258060303628125`*^9}, {3.7258060832886333`*^9, 
+   3.7258061247700033`*^9}, {3.725806172704544*^9, 3.725806174485282*^9}, {
+   3.725806248684733*^9, 3.7258062868382215`*^9}, {3.7258064173715353`*^9, 
+   3.7258064356020675`*^9}, {3.726878282037089*^9, 3.7268783039982862`*^9}, {
+   3.731413253482585*^9, 3.731413275929268*^9}, {3.7314133725662208`*^9, 
+   3.7314134278191338`*^9}, {3.7314477516074495`*^9, 
+   3.7314477517427797`*^9}, {3.731449572809461*^9, 3.731449575673075*^9}, {
+   3.7314497792954946`*^9, 3.7314497795762415`*^9}, {3.731449829719569*^9, 
+   3.731449848397232*^9}, {3.731449948490402*^9, 3.731450152928963*^9}, {
+   3.731450207337632*^9, 3.7314503849739556`*^9}, {3.7314513618686037`*^9, 
+   3.731451460608522*^9}, {3.73145174400305*^9, 3.731451771622488*^9}, {
+   3.731451830135069*^9, 3.7314518357951193`*^9}, 3.737466845038596*^9, {
+   3.737467757976621*^9, 3.737467762613515*^9}, {3.75116646386931*^9, 
+   3.751166571874826*^9}, {3.7511666152321053`*^9, 3.7511666260613317`*^9}, 
+   3.751166660508484*^9, {3.751166722613907*^9, 3.751166722805595*^9}, {
+   3.751166775889784*^9, 3.751166801064102*^9}, {3.751166847767342*^9, 
+   3.751167036933495*^9}, {3.7511672712249603`*^9, 3.751167309937714*^9}, {
+   3.751170219180656*^9, 3.751170220514648*^9}, {3.931609492376914*^9, 
+   3.931609553961446*^9}, {3.931609760112962*^9, 3.9316098444680147`*^9}, {
+   3.931610369486271*^9, 3.931610472754368*^9}, {3.9316109849179583`*^9, 
+   3.93161159579802*^9}, {3.9316116559041443`*^9, 3.9316117688790283`*^9}, {
+   3.931612518194569*^9, 3.931612564270186*^9}, {3.9316126309343348`*^9, 
+   3.931612767202993*^9}, {3.9316128444174747`*^9, 3.931612901870735*^9}, {
+   3.931614080591468*^9, 3.9316141817368*^9}, {3.931614224167733*^9, 
+   3.9316143771356697`*^9}, {3.931615358735444*^9, 3.9316154971793737`*^9}, {
+   3.9316157185684347`*^9, 3.931615720635228*^9}, {3.9316158374408207`*^9, 
+   3.931615895437963*^9}, 3.931615939000595*^9, {3.931615988242818*^9, 
+   3.931615993209733*^9}, {3.931616023714343*^9, 3.931616117620473*^9}, {
+   3.931616151991768*^9, 3.931616250162119*^9}, {3.931616343833551*^9, 
+   3.9316163634357224`*^9}, {3.93161641078566*^9, 3.9316164152418423`*^9}, 
+   3.9316172962533216`*^9},
+ CellID->234064909,ExpressionUUID->"ef4078cd-9d91-4348-bbd5-a66f833326c2"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"megaparsec", " ", "=", " ", 
+    RowBox[{"3.086", "*", 
+     RowBox[{"10", "^", "24"}]}]}], ";"}], " ", 
+  RowBox[{"(*", 
+   RowBox[{"cm", "/", "Mpc"}], "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"rho", "=", 
+   RowBox[{"Table", "[", 
+    RowBox[{
+     RowBox[{"5.0", "*", 
+      SuperscriptBox["10", 
+       RowBox[{"-", "6"}]], "*", 
+      SuperscriptBox[
+       RowBox[{"(", "megaparsec", ")"}], 
+       RowBox[{"-", "3"}]], "*", 
+      SuperscriptBox[
+       RowBox[{"(", 
+        RowBox[{"1", "+", 
+         RowBox[{"diffuseDistances", "[", 
+          RowBox[{"[", "i", "]"}], "]"}]}], ")"}], 
+       RowBox[{"-", "2"}]]}], ",", 
+     RowBox[{"{", 
+      RowBox[{"i", ",", "1", ",", 
+       RowBox[{"Length", "[", "diffuseDistances", "]"}]}], "}"}]}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]"}], "Input",
+ CellChangeTimes->{{3.931615971155807*^9, 3.931615974859902*^9}, {
+   3.9316163351722527`*^9, 3.931616342522043*^9}, {3.9316164275203037`*^9, 
+   3.931616522608642*^9}, {3.931617026166731*^9, 3.931617026813348*^9}, 
+   3.931617061282487*^9},
+ CellID->237827299,ExpressionUUID->"a207016c-6c41-4c31-bb45-1a5d06898186"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[TextData[{
+ "We can calculate the diffuse gamma-ray background flux from such a class of \
+sources by using the \[OpenCurlyDoubleQuote]",
+ StyleBox["CascadeDiffuse", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote]  function. Besides ",
+ Cell[BoxData[
+  FormBox[
+   FractionBox["dN", "d\[Epsilon]"], TraditionalForm]],ExpressionUUID->
+  "2ba5c3eb-3331-47fd-a91d-7c65c4246cc6"],
+ " and ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"\[Rho]", "(", "z", ")"}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "e082d9ed-8c41-44ed-8775-686670239689"],
+ ", \[OpenCurlyDoubleQuote]",
+ StyleBox["CascadeDiffuse[", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ Cell[BoxData[
+  FormBox[
+   FractionBox["dN", "d\[Epsilon]"], TraditionalForm]],ExpressionUUID->
+  "00f045a5-38fe-4c41-874d-cbedfe8220b9"],
+ StyleBox[", ", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ Cell[BoxData[
+  FormBox[
+   SubscriptBox["z", "max"], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "a3607b0f-ccc9-4995-9f61-e448b4725baf"],
+ StyleBox[", ", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"\[Rho]", "(", "z", ")"}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "66d2049a-ff57-4e86-ab4d-2378437d931f"],
+ StyleBox["]", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ StyleBox["\[CloseCurlyDoubleQuote]", "Input",
+  FontSize->16,
+  FontWeight->"Plain"],
+ " ",
+ "also takes in as an argument the maximum redshift ",
+ Cell[BoxData[
+  FormBox[
+   SubscriptBox["z", "max"], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "50e90dfd-476a-4e1a-a679-c8625d2ae8cb"],
+ " out to where sources are located (\[Gamma]-Cascade only accepts ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    SubscriptBox["z", "max"], "<=", "10"}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "388e9be1-2720-4be3-b28a-6bb4c8952838"],
+ "). This function then produces a cascaded diffuse flux ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"\[Phi]", "(", "E", ")"}], TraditionalForm]],ExpressionUUID->
+  "ca272b3f-372a-4bb5-b0d2-2487ba7e9ea4"],
+ ", in ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"[", 
+    RowBox[{"GeV", "  ", 
+     SuperscriptBox[
+      StyleBox["s",
+       FontSlant->"Plain"], 
+      RowBox[{"-", "1"}]], " ", 
+     SuperscriptBox["cm", 
+      RowBox[{"-", "2"}]], " ", 
+     SuperscriptBox["sr", 
+      RowBox[{"-", "1"}]]}], "]"}], TraditionalForm]],ExpressionUUID->
+  "9fd1375f-4717-421c-9832-88436e10c613"],
+ ", as a list evaluated across the \[OpenCurlyDoubleQuote]",
+ StyleBox["energies", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] array as in all previous simulations. It takes \
+into account cosmological and electromagnetic cascade evolution. \n\nBelow, \
+the variable \[OpenCurlyDoubleQuote]",
+ StyleBox["diffuseFlux", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] is assigned the output list of the function \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["CascadeDiffuse", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote]. \[OpenCurlyDoubleQuote]",
+ StyleBox["CascadeDiffuse", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] is passed \[OpenCurlyDoubleQuote]",
+ StyleBox["injSpectrum", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] and \[OpenCurlyDoubleQuote]",
+ StyleBox["rho", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] as the injection spectrum and comoving density \
+distribution, respectively. Sources are assumed to extend out to a maximum \
+redshift of ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    SubscriptBox["z", "max"], "=", "0.1"}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "add433d1-cdce-4c7e-8573-04d00ad0fdeb"],
+ ". This should take less than one minute."
+}], "Subsection",
+ CellChangeTimes->{{3.7250571186807013`*^9, 3.725057292375537*^9}, {
+   3.7250573252276497`*^9, 3.7250573411442385`*^9}, 3.7250593741062*^9, {
+   3.725122223641325*^9, 3.7251223610563045`*^9}, {3.7251223911045084`*^9, 
+   3.7251228880855083`*^9}, {3.725122946278465*^9, 3.7251232806431646`*^9}, {
+   3.725123313620189*^9, 3.7251233197143793`*^9}, {3.725123445730384*^9, 
+   3.725123447045088*^9}, {3.7251234863076363`*^9, 3.7251238217307067`*^9}, {
+   3.725123863970313*^9, 3.725123988346312*^9}, {3.7252864300818615`*^9, 
+   3.7252864405829587`*^9}, {3.7253023020691557`*^9, 3.725302347074763*^9}, 
+   3.7253023998798127`*^9, {3.725303092537721*^9, 3.7253030937065372`*^9}, {
+   3.7253046322090282`*^9, 3.725304663413898*^9}, {3.7258038463758593`*^9, 
+   3.7258038486468744`*^9}, {3.72580389147686*^9, 3.725804323523389*^9}, {
+   3.725804377902076*^9, 3.725804627711749*^9}, {3.7258047434105916`*^9, 
+   3.7258047777439775`*^9}, {3.725804858734436*^9, 3.725804858900879*^9}, {
+   3.7258051538466744`*^9, 3.7258052331356134`*^9}, {3.7258052808505697`*^9, 
+   3.725805362394535*^9}, {3.725805407092487*^9, 3.725805683106861*^9}, {
+   3.725805715216296*^9, 3.725805941733996*^9}, {3.7258060303628125`*^9, 
+   3.7258060303628125`*^9}, {3.7258060832886333`*^9, 
+   3.7258061247700033`*^9}, {3.725806172704544*^9, 3.725806174485282*^9}, {
+   3.725806248684733*^9, 3.7258062868382215`*^9}, {3.7258064173715353`*^9, 
+   3.7258064356020675`*^9}, {3.726878282037089*^9, 3.7268783039982862`*^9}, {
+   3.731413253482585*^9, 3.731413275929268*^9}, {3.7314133725662208`*^9, 
+   3.7314134278191338`*^9}, {3.7314477516074495`*^9, 
+   3.7314477517427797`*^9}, {3.731449572809461*^9, 3.731449575673075*^9}, {
+   3.7314497792954946`*^9, 3.7314497795762415`*^9}, {3.731449829719569*^9, 
+   3.731449848397232*^9}, {3.731449948490402*^9, 3.731450152928963*^9}, {
+   3.731450207337632*^9, 3.7314503849739556`*^9}, {3.7314513618686037`*^9, 
+   3.731451460608522*^9}, {3.73145174400305*^9, 3.731451771622488*^9}, {
+   3.731451830135069*^9, 3.7314518357951193`*^9}, 3.737466845038596*^9, {
+   3.737467757976621*^9, 3.737467762613515*^9}, {3.75116646386931*^9, 
+   3.751166571874826*^9}, {3.7511666152321053`*^9, 3.7511666260613317`*^9}, 
+   3.751166660508484*^9, {3.751166722613907*^9, 3.751166722805595*^9}, {
+   3.751166775889784*^9, 3.751166801064102*^9}, {3.751166847767342*^9, 
+   3.751167036933495*^9}, {3.7511672712249603`*^9, 3.751167309937714*^9}, {
+   3.751170219180656*^9, 3.751170220514648*^9}, {3.931609492376914*^9, 
+   3.931609553961446*^9}, {3.931609760112962*^9, 3.9316098444680147`*^9}, {
+   3.931610369486271*^9, 3.931610472754368*^9}, {3.9316109849179583`*^9, 
+   3.93161159579802*^9}, {3.9316116559041443`*^9, 3.9316117688790283`*^9}, {
+   3.931612518194569*^9, 3.931612564270186*^9}, {3.9316126309343348`*^9, 
+   3.931612767202993*^9}, {3.9316128444174747`*^9, 3.931612901870735*^9}, {
+   3.931614080591468*^9, 3.9316141817368*^9}, {3.931614224167733*^9, 
+   3.9316143771356697`*^9}, {3.931615358735444*^9, 3.9316154971793737`*^9}, {
+   3.9316157185684347`*^9, 3.931615720635228*^9}, {3.9316158374408207`*^9, 
+   3.931615895437963*^9}, 3.931616468821618*^9, {3.931616554485628*^9, 
+   3.931616636820019*^9}, {3.931616724864819*^9, 3.9316167492288437`*^9}, {
+   3.931616801634231*^9, 3.931616888916588*^9}, {3.931617087513814*^9, 
+   3.931617093317275*^9}, {3.931622140018856*^9, 3.931622151877013*^9}},
+ CellID->1074345571,ExpressionUUID->"347d0221-3fdb-416c-bf0f-7533a640bb8e"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"diffuseFlux", "=", 
+    RowBox[{"CascadeDiffuse", "[", 
+     RowBox[{"injSpectrum", ",", "0.1", ",", "rho"}], "]"}]}], ";"}], "//", 
+  "AbsoluteTiming"}], "\[IndentingNewLine]", 
+ RowBox[{"diffuseFluxPlot", "=", 
+  RowBox[{"specPlot", "[", "diffuseFlux", "]"}]}]}], "Input",
+ CellLabel->"In[17]:=",
+ CellID->1407002315,ExpressionUUID->"8d266692-7760-4c4b-85c5-a401f5085ab0"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[TextData[{
+ "In addition to \[OpenCurlyDoubleQuote]",
+ StyleBox["CascadeDiffuse", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote], \[Gamma]-Cascade also has the modules \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["RedshiftDiffuse", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] and \[OpenCurlyDoubleQuote]",
+ StyleBox["AttenuateDiffuse", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote], to redshift (no interactions) and attenuate \
+(redshifting and pair-production attenuation) spectra, respectively. These \
+are the source distribution generalizations of \[OpenCurlyDoubleQuote]",
+ StyleBox["RedshiftPoint", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] and \[OpenCurlyDoubleQuote]",
+ StyleBox["AttenuatePoint", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote]. Their usage is very similar to \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["CascadeDiffuse", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote]; we include examples below."
+}], "Subsection",
+ CellChangeTimes->{{3.7250571186807013`*^9, 3.725057292375537*^9}, {
+   3.7250573252276497`*^9, 3.7250573411442385`*^9}, 3.7250593741062*^9, {
+   3.725122223641325*^9, 3.7251223610563045`*^9}, {3.7251223911045084`*^9, 
+   3.7251228880855083`*^9}, {3.725122946278465*^9, 3.7251232806431646`*^9}, {
+   3.725123313620189*^9, 3.7251233197143793`*^9}, {3.725123445730384*^9, 
+   3.725123447045088*^9}, {3.7251234863076363`*^9, 3.7251238217307067`*^9}, {
+   3.725123863970313*^9, 3.725123988346312*^9}, {3.7252864300818615`*^9, 
+   3.7252864405829587`*^9}, {3.7253023020691557`*^9, 3.725302347074763*^9}, 
+   3.7253023998798127`*^9, {3.725303092537721*^9, 3.7253030937065372`*^9}, {
+   3.7253046322090282`*^9, 3.725304663413898*^9}, {3.7258038463758593`*^9, 
+   3.7258038486468744`*^9}, {3.72580389147686*^9, 3.725804323523389*^9}, {
+   3.725804377902076*^9, 3.725804627711749*^9}, {3.7258047434105916`*^9, 
+   3.7258047777439775`*^9}, {3.725804858734436*^9, 3.725804858900879*^9}, {
+   3.7258051538466744`*^9, 3.7258052331356134`*^9}, {3.7258052808505697`*^9, 
+   3.725805362394535*^9}, {3.725805407092487*^9, 3.725805683106861*^9}, {
+   3.725805715216296*^9, 3.725805941733996*^9}, {3.7258060303628125`*^9, 
+   3.7258060303628125`*^9}, {3.7258060832886333`*^9, 
+   3.7258061247700033`*^9}, {3.725806172704544*^9, 3.725806174485282*^9}, {
+   3.725806248684733*^9, 3.7258062868382215`*^9}, {3.7258064173715353`*^9, 
+   3.7258064356020675`*^9}, {3.726878282037089*^9, 3.7268783039982862`*^9}, {
+   3.731413253482585*^9, 3.731413275929268*^9}, {3.7314133725662208`*^9, 
+   3.7314134278191338`*^9}, {3.7314477516074495`*^9, 
+   3.7314477517427797`*^9}, {3.731449572809461*^9, 3.731449575673075*^9}, {
+   3.7314497792954946`*^9, 3.7314497795762415`*^9}, {3.731449829719569*^9, 
+   3.731449848397232*^9}, {3.731449948490402*^9, 3.731450152928963*^9}, {
+   3.731450207337632*^9, 3.7314503849739556`*^9}, {3.7314513618686037`*^9, 
+   3.731451460608522*^9}, {3.73145174400305*^9, 3.731451771622488*^9}, {
+   3.731451830135069*^9, 3.7314518357951193`*^9}, 3.737466845038596*^9, {
+   3.737467757976621*^9, 3.737467762613515*^9}, {3.75116646386931*^9, 
+   3.751166571874826*^9}, {3.7511666152321053`*^9, 3.7511666260613317`*^9}, 
+   3.751166660508484*^9, {3.751166722613907*^9, 3.751166722805595*^9}, {
+   3.751166775889784*^9, 3.751166801064102*^9}, {3.751166847767342*^9, 
+   3.751167036933495*^9}, {3.7511672712249603`*^9, 3.751167309937714*^9}, {
+   3.751170219180656*^9, 3.751170220514648*^9}, {3.931609492376914*^9, 
+   3.931609553961446*^9}, {3.931609760112962*^9, 3.9316098444680147`*^9}, {
+   3.931610369486271*^9, 3.931610472754368*^9}, {3.9316109849179583`*^9, 
+   3.93161159579802*^9}, {3.9316116559041443`*^9, 3.9316117688790283`*^9}, {
+   3.931612518194569*^9, 3.931612564270186*^9}, {3.9316126309343348`*^9, 
+   3.931612767202993*^9}, {3.9316128444174747`*^9, 3.931612901870735*^9}, {
+   3.931614080591468*^9, 3.9316141817368*^9}, {3.931614224167733*^9, 
+   3.9316143771356697`*^9}, {3.931615358735444*^9, 3.9316154971793737`*^9}, {
+   3.9316157185684347`*^9, 3.931615720635228*^9}, {3.9316158374408207`*^9, 
+   3.931615895437963*^9}, 3.931616468821618*^9, {3.931616554485628*^9, 
+   3.931616636820019*^9}, {3.931616724864819*^9, 3.9316167492288437`*^9}, {
+   3.931616801634231*^9, 3.931616888916588*^9}, {3.931617087513814*^9, 
+   3.931617093317275*^9}, {3.931621973123516*^9, 3.931622120557167*^9}},
+ CellID->1895889613,ExpressionUUID->"1c3cccbb-8f2e-42cb-b952-d344715cbc6c"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"diffuseRedshiftedFlux", "=", 
+    RowBox[{"RedshiftDiffuse", "[", 
+     RowBox[{"injSpectrum", ",", "0.1", ",", "rho"}], "]"}]}], ";"}], "//", 
+  "AbsoluteTiming"}], "\[IndentingNewLine]", 
+ RowBox[{"diffuseRedshiftedFluxPlot", "=", 
+  RowBox[{"specPlot", "[", "diffuseRedshiftedFlux", "]"}]}]}], "Input",
+ CellChangeTimes->{{3.9316221647043667`*^9, 3.931622222483305*^9}},
+ CellLabel->"In[30]:=",
+ CellID->1722593754,ExpressionUUID->"0d3c3d90-e893-41e8-8788-e40e4c7de49e"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"diffuseAttenuatedFlux", "=", 
+    RowBox[{"AttenuateDiffuse", "[", 
+     RowBox[{"injSpectrum", ",", "0.1", ",", "rho"}], "]"}]}], ";"}], "//", 
+  "AbsoluteTiming"}], "\[IndentingNewLine]", 
+ RowBox[{"diffuseAttenuatedFluxPlot", "=", 
+  RowBox[{"specPlot", "[", "diffuseAttenuatedFlux", "]"}]}]}], "Input",
+ CellChangeTimes->{{3.931622191086331*^9, 3.931622225987543*^9}},
+ CellLabel->"In[32]:=",
+ CellID->371794818,ExpressionUUID->"16ca33b5-adab-40e4-a953-74b4001838c6"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Evolving Population of Sources", "Section",
+ CellChangeTimes->{{3.7250570571679015`*^9, 3.725057085071234*^9}, {
+   3.7253045837930994`*^9, 3.725304602055767*^9}, {3.751170205567389*^9, 
+   3.751170209610299*^9}, 3.9316171210123587`*^9},
+ CellID->926635129,ExpressionUUID->"3d3cb475-3bb4-40e6-b5b7-37172e34fa49"],
+
+Cell[CellGroupData[{
+
+Cell[TextData[{
+ "Finally, we consider the diffuse gamma-ray background from a class of \
+sources which have some  evolving intrinsic spectral properties. In this \
+case, the redshift-dependence of the luminosity function cannot be separated \
+from the emission spectrum: ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    RowBox[{
+     FractionBox["dN", 
+      RowBox[{"d\[Epsilon]", " ", 
+       SubscriptBox["dV", "c"]}]], 
+     RowBox[{"(", 
+      RowBox[{"\[Epsilon]", ",", "z"}], ")"}]}], "=", 
+    RowBox[{
+     FractionBox["dN", "d\[Epsilon]"], 
+     RowBox[{"(", 
+      RowBox[{"\[Epsilon]", ",", "z"}], ")"}], 
+     RowBox[{"\[Rho]", "(", "z", ")"}]}]}], TraditionalForm]],ExpressionUUID->
+  "236ba746-21a7-4ba3-b624-1a580557bea2"],
+ ". For example, consider a population of sources with the exponentially \
+cutoff power-law injection ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    FractionBox["dN", "d\[Epsilon]"], "=", 
+    RowBox[{"A", " ", 
+     SuperscriptBox["\[Epsilon]", 
+      RowBox[{" ", 
+       RowBox[{"-", 
+        RowBox[{"\[CapitalGamma]", "(", "z", ")"}]}]}]], 
+     RowBox[{"exp", "(", 
+      FractionBox[
+       RowBox[{"-", "\[Epsilon]"}], 
+       SubscriptBox["\[Epsilon]", "cutoff"]], ")"}]}]}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "c53f230f-6dad-4765-83c2-69917289b30e"],
+ ", where ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"A", "=", 
+    RowBox[{"3", "\[Times]", 
+     SuperscriptBox["10", "42"], 
+     SuperscriptBox["GeV", " "], 
+     SuperscriptBox[
+      StyleBox["s",
+       FontSlant->"Plain"], 
+      RowBox[{"-", "1"}]]}]}], TraditionalForm]],ExpressionUUID->
+  "e9167c97-ab81-4ee6-99e5-98bcc4a50aa3"],
+ " is the normalization, ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    RowBox[{"\[CapitalGamma]", "(", "z", ")"}], "=", 
+    RowBox[{
+     RowBox[{"-", "2"}], "\[Times]", 
+     RowBox[{"(", 
+      RowBox[{"1", "+", "z"}], ")"}]}]}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "a7cf16e9-f7f0-4a81-8b01-c0ca2affcee0"],
+ " is the redshift-dependent spectral index and ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    SubscriptBox["\[Epsilon]", "cutoff"], "=", 
+    SuperscriptBox["10", "10"]}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "5e1d469a-8341-4556-bf2c-8c9025908da4"],
+ " GeV is the cutoff energy. To calculate the diffuse flux expected from such \
+a class of sources, you can use the \[OpenCurlyDoubleQuote]",
+ StyleBox["CascadeEvolving", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote]  function. \[OpenCurlyDoubleQuote]",
+ StyleBox["CascadeEvolving[", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ Cell[BoxData[
+  FormBox[
+   FractionBox["dN", "d\[Epsilon]"], TraditionalForm]],ExpressionUUID->
+  "0e4ee727-c2d3-45a5-9d1a-8d8bf791faa2"],
+ StyleBox[", ", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ Cell[BoxData[
+  FormBox[
+   SubscriptBox["z", "max"], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "7b78428c-5cf3-4537-a3d9-72904b622d84"],
+ StyleBox[", ", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"\[Rho]", "(", "z", ")"}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "9378f8b2-1377-4a06-9b2b-5943640839a4"],
+ StyleBox["]", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ StyleBox["\[CloseCurlyDoubleQuote]", "Input",
+  FontSize->16,
+  FontWeight->"Plain"],
+ " is similar to \[OpenCurlyDoubleQuote]",
+ StyleBox["CascadeDiffuse", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote], but its injection spectrum is now a function of \
+both energy and redshift ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    FractionBox["dN", "d\[Epsilon]"], 
+    RowBox[{"(", 
+     RowBox[{"\[Epsilon]", ",", "z"}], ")"}]}], TraditionalForm]],
+  ExpressionUUID->"e402068a-a686-4854-943c-6120ddf6586b"],
+ " and must be formatted accordingly. It should be a two-dimensional array \
+with dimensions 1036 \[Times] 300, corresponding to the lengths of \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["diffuseDistances", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] and \[OpenCurlyDoubleQuote]",
+ StyleBox["energies", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote], respectively. In each entry, ",
+ Cell[BoxData[
+  FormBox[
+   FractionBox["dN", "d\[Epsilon]"], TraditionalForm]],ExpressionUUID->
+  "a41b78be-e5d3-4671-a958-92f62194f4bd"],
+ " must be evaluated at the the respective redshifts and energies from these \
+arrays. This be achieved by using the \[OpenCurlyDoubleQuote]",
+ StyleBox["Table", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] function with two iterators. For the spectrum in \
+the example above, we assign the name \[OpenCurlyDoubleQuote]",
+ StyleBox["injSpectrum2", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] to the correctly-shaped injection array below."
+}], "Subsection",
+ CellChangeTimes->{{3.7250571186807013`*^9, 3.725057292375537*^9}, {
+   3.7250573252276497`*^9, 3.7250573411442385`*^9}, 3.7250593741062*^9, {
+   3.725122223641325*^9, 3.7251223610563045`*^9}, {3.7251223911045084`*^9, 
+   3.7251228880855083`*^9}, {3.725122946278465*^9, 3.7251232806431646`*^9}, {
+   3.725123313620189*^9, 3.7251233197143793`*^9}, {3.725123445730384*^9, 
+   3.725123447045088*^9}, {3.7251234863076363`*^9, 3.7251238217307067`*^9}, {
+   3.725123863970313*^9, 3.725123988346312*^9}, {3.7252864300818615`*^9, 
+   3.7252864405829587`*^9}, {3.7253023020691557`*^9, 3.725302347074763*^9}, 
+   3.7253023998798127`*^9, {3.725303092537721*^9, 3.7253030937065372`*^9}, {
+   3.7253046322090282`*^9, 3.725304663413898*^9}, {3.7258038463758593`*^9, 
+   3.7258038486468744`*^9}, {3.72580389147686*^9, 3.725804323523389*^9}, {
+   3.725804377902076*^9, 3.725804627711749*^9}, {3.7258047434105916`*^9, 
+   3.7258047777439775`*^9}, {3.725804858734436*^9, 3.725804858900879*^9}, {
+   3.7258051538466744`*^9, 3.7258052331356134`*^9}, {3.7258052808505697`*^9, 
+   3.725805362394535*^9}, {3.725805407092487*^9, 3.725805683106861*^9}, {
+   3.725805715216296*^9, 3.725805941733996*^9}, {3.7258060303628125`*^9, 
+   3.7258060303628125`*^9}, {3.7258060832886333`*^9, 
+   3.7258061247700033`*^9}, {3.725806172704544*^9, 3.725806174485282*^9}, {
+   3.725806248684733*^9, 3.7258062868382215`*^9}, {3.7258064173715353`*^9, 
+   3.7258064356020675`*^9}, {3.726878282037089*^9, 3.7268783039982862`*^9}, {
+   3.731413253482585*^9, 3.731413275929268*^9}, {3.7314133725662208`*^9, 
+   3.7314134278191338`*^9}, {3.7314477516074495`*^9, 
+   3.7314477517427797`*^9}, {3.731449572809461*^9, 3.731449575673075*^9}, {
+   3.7314497792954946`*^9, 3.7314497795762415`*^9}, {3.731449829719569*^9, 
+   3.731449848397232*^9}, {3.731449948490402*^9, 3.731450152928963*^9}, {
+   3.731450207337632*^9, 3.7314503849739556`*^9}, {3.7314513618686037`*^9, 
+   3.731451460608522*^9}, {3.73145174400305*^9, 3.731451771622488*^9}, {
+   3.731451830135069*^9, 3.7314518357951193`*^9}, 3.737466845038596*^9, {
+   3.737467757976621*^9, 3.737467762613515*^9}, {3.75116646386931*^9, 
+   3.751166571874826*^9}, {3.7511666152321053`*^9, 3.7511666260613317`*^9}, 
+   3.751166660508484*^9, {3.751166722613907*^9, 3.751166722805595*^9}, {
+   3.751166775889784*^9, 3.751166801064102*^9}, {3.751166847767342*^9, 
+   3.751167036933495*^9}, {3.7511672712249603`*^9, 3.751167309937714*^9}, {
+   3.751170219180656*^9, 3.751170220514648*^9}, {3.931609492376914*^9, 
+   3.931609553961446*^9}, {3.931609760112962*^9, 3.9316098444680147`*^9}, {
+   3.931610369486271*^9, 3.931610472754368*^9}, {3.9316109849179583`*^9, 
+   3.93161159579802*^9}, {3.9316116559041443`*^9, 3.9316117688790283`*^9}, {
+   3.931612518194569*^9, 3.931612564270186*^9}, {3.9316126309343348`*^9, 
+   3.931612767202993*^9}, {3.9316128444174747`*^9, 3.931612901870735*^9}, {
+   3.931614080591468*^9, 3.9316141817368*^9}, {3.931614224167733*^9, 
+   3.9316143771356697`*^9}, {3.931615358735444*^9, 3.9316154971793737`*^9}, {
+   3.9316157185684347`*^9, 3.931615720635228*^9}, {3.9316158374408207`*^9, 
+   3.931615895437963*^9}, 3.931616468821618*^9, {3.931616554485628*^9, 
+   3.931616636820019*^9}, {3.931616724864819*^9, 3.9316167492288437`*^9}, {
+   3.931616801634231*^9, 3.931616888916588*^9}, {3.931617087513814*^9, 
+   3.931617093317275*^9}, {3.93161807467759*^9, 3.931618109064513*^9}, {
+   3.931618762435403*^9, 3.9316188048331757`*^9}, {3.931618840769699*^9, 
+   3.931618904855998*^9}, {3.931619210063199*^9, 3.931619317988905*^9}, {
+   3.931619370371776*^9, 3.931619539788808*^9}, {3.931619624138466*^9, 
+   3.931619688173634*^9}, {3.931619741468328*^9, 3.931620126050795*^9}, {
+   3.9316201963853827`*^9, 3.931620292197546*^9}, 3.93162060464283*^9},
+ CellID->2026683901,ExpressionUUID->"2c59ce83-6425-44d5-bd0b-eb31858033cf"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"injSpectrum2", "=", 
+    RowBox[{"Table", "[", 
+     RowBox[{
+      RowBox[{"cutoffPowerLaw", "[", 
+       RowBox[{
+        RowBox[{"energies", "[", 
+         RowBox[{"[", "i", "]"}], "]"}], ",", 
+        RowBox[{"2.0", "*", 
+         RowBox[{"(", 
+          RowBox[{"1.", "+", 
+           RowBox[{"diffuseDistances", "[", 
+            RowBox[{"[", "j", "]"}], "]"}]}], ")"}]}], ",", 
+        SuperscriptBox["10", "10"], ",", 
+        RowBox[{"(", 
+         RowBox[{"3.", "*", 
+          SuperscriptBox["10", "42"]}], ")"}]}], "]"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"j", ",", "1", ",", 
+        RowBox[{"Length", "[", "diffuseDistances", "]"}]}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"i", ",", "1", ",", 
+        RowBox[{"Length", "[", "energies", "]"}]}], "}"}]}], "]"}]}], ";"}], 
+  "\[IndentingNewLine]"}]], "Input",
+ CellChangeTimes->{{3.9316200395372763`*^9, 3.931620041105218*^9}, {
+  3.931620129272134*^9, 3.931620135553171*^9}, {3.931620308375648*^9, 
+  3.9316203387097473`*^9}},
+ CellLabel->"In[22]:=",
+ CellID->1396620194,ExpressionUUID->"81e7140d-2f6c-4239-aaf5-cd800d100b10"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[TextData[{
+ "All other inputs are the same as in \[OpenCurlyDoubleQuote]",
+ StyleBox["CascadeDiffuse", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote]. Below, we calculate the flux \[Phi], in ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"[", 
+    RowBox[{"GeV", "  ", 
+     SuperscriptBox[
+      StyleBox["s",
+       FontSlant->"Plain"], 
+      RowBox[{"-", "1"}]], " ", 
+     SuperscriptBox["cm", 
+      RowBox[{"-", "2"}]], " ", 
+     SuperscriptBox["sr", 
+      RowBox[{"-", "1"}]]}], "]"}], TraditionalForm]],ExpressionUUID->
+  "221f3171-11fa-48f9-8b90-ea30ca13ac70"],
+ ", arriving at ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"z", "=", "0"}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "6bef8ed6-22ab-4d2e-91c0-bb51b2977a24"],
+ " from the same population of sources (i.e. using the same ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"\[Rho]", "(", "z", ")"}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "ece59beb-c7df-4f09-b451-32af72ab11de"],
+ ") as the last example, but using \[OpenCurlyDoubleQuote]",
+ StyleBox["injSpectrum2", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] as the evolving emission spectra of sources using \
+the \[OpenCurlyDoubleQuote]",
+ StyleBox["CascadeEvolving", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] function.  Its output is once again a list of 300 \
+values of \[Phi], for each energy in the \[OpenCurlyDoubleQuote]",
+ StyleBox["energies", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] array, which is assigned to the variable \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["diffuseEvolvingFlux", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote]. This should take less than one minute."
+}], "Subsection",
+ CellChangeTimes->{{3.7250571186807013`*^9, 3.725057292375537*^9}, {
+   3.7250573252276497`*^9, 3.7250573411442385`*^9}, 3.7250593741062*^9, {
+   3.725122223641325*^9, 3.7251223610563045`*^9}, {3.7251223911045084`*^9, 
+   3.7251228880855083`*^9}, {3.725122946278465*^9, 3.7251232806431646`*^9}, {
+   3.725123313620189*^9, 3.7251233197143793`*^9}, {3.725123445730384*^9, 
+   3.725123447045088*^9}, {3.7251234863076363`*^9, 3.7251238217307067`*^9}, {
+   3.725123863970313*^9, 3.725123988346312*^9}, {3.7252864300818615`*^9, 
+   3.7252864405829587`*^9}, {3.7253023020691557`*^9, 3.725302347074763*^9}, 
+   3.7253023998798127`*^9, {3.725303092537721*^9, 3.7253030937065372`*^9}, {
+   3.7253046322090282`*^9, 3.725304663413898*^9}, {3.7258038463758593`*^9, 
+   3.7258038486468744`*^9}, {3.72580389147686*^9, 3.725804323523389*^9}, {
+   3.725804377902076*^9, 3.725804627711749*^9}, {3.7258047434105916`*^9, 
+   3.7258047777439775`*^9}, {3.725804858734436*^9, 3.725804858900879*^9}, {
+   3.7258051538466744`*^9, 3.7258052331356134`*^9}, {3.7258052808505697`*^9, 
+   3.725805362394535*^9}, {3.725805407092487*^9, 3.725805683106861*^9}, {
+   3.725805715216296*^9, 3.725805941733996*^9}, {3.7258060303628125`*^9, 
+   3.7258060303628125`*^9}, {3.7258060832886333`*^9, 
+   3.7258061247700033`*^9}, {3.725806172704544*^9, 3.725806174485282*^9}, {
+   3.725806248684733*^9, 3.7258062868382215`*^9}, {3.7258064173715353`*^9, 
+   3.7258064356020675`*^9}, {3.726878282037089*^9, 3.7268783039982862`*^9}, {
+   3.731413253482585*^9, 3.731413275929268*^9}, {3.7314133725662208`*^9, 
+   3.7314134278191338`*^9}, {3.7314477516074495`*^9, 
+   3.7314477517427797`*^9}, {3.731449572809461*^9, 3.731449575673075*^9}, {
+   3.7314497792954946`*^9, 3.7314497795762415`*^9}, {3.731449829719569*^9, 
+   3.731449848397232*^9}, {3.731449948490402*^9, 3.731450152928963*^9}, {
+   3.731450207337632*^9, 3.7314503849739556`*^9}, {3.7314513618686037`*^9, 
+   3.731451460608522*^9}, {3.73145174400305*^9, 3.731451771622488*^9}, {
+   3.731451830135069*^9, 3.7314518357951193`*^9}, 3.737466845038596*^9, {
+   3.737467757976621*^9, 3.737467762613515*^9}, {3.75116646386931*^9, 
+   3.751166571874826*^9}, {3.7511666152321053`*^9, 3.7511666260613317`*^9}, 
+   3.751166660508484*^9, {3.751166722613907*^9, 3.751166722805595*^9}, {
+   3.751166775889784*^9, 3.751166801064102*^9}, {3.751166847767342*^9, 
+   3.751167036933495*^9}, {3.7511672712249603`*^9, 3.751167309937714*^9}, {
+   3.751170219180656*^9, 3.751170220514648*^9}, {3.931609492376914*^9, 
+   3.931609553961446*^9}, {3.931609760112962*^9, 3.9316098444680147`*^9}, {
+   3.931610369486271*^9, 3.931610472754368*^9}, {3.9316109849179583`*^9, 
+   3.93161159579802*^9}, {3.9316116559041443`*^9, 3.9316117688790283`*^9}, {
+   3.931612518194569*^9, 3.931612564270186*^9}, {3.9316126309343348`*^9, 
+   3.931612767202993*^9}, {3.9316128444174747`*^9, 3.931612901870735*^9}, {
+   3.931614080591468*^9, 3.9316141817368*^9}, {3.931614224167733*^9, 
+   3.9316143771356697`*^9}, {3.931615358735444*^9, 3.9316154971793737`*^9}, {
+   3.9316157185684347`*^9, 3.931615720635228*^9}, {3.9316158374408207`*^9, 
+   3.931615895437963*^9}, 3.931616468821618*^9, {3.931616554485628*^9, 
+   3.931616636820019*^9}, {3.931616724864819*^9, 3.9316167492288437`*^9}, {
+   3.931616801634231*^9, 3.931616888916588*^9}, {3.931617087513814*^9, 
+   3.931617093317275*^9}, {3.93161807467759*^9, 3.931618109064513*^9}, {
+   3.931618762435403*^9, 3.9316188048331757`*^9}, {3.931618840769699*^9, 
+   3.931618904855998*^9}, {3.931619210063199*^9, 3.931619317988905*^9}, {
+   3.931619370371776*^9, 3.931619539788808*^9}, {3.931619624138466*^9, 
+   3.931619688173634*^9}, {3.931619741468328*^9, 3.931620126050795*^9}, {
+   3.9316201963853827`*^9, 3.931620292197546*^9}, {3.931620377347611*^9, 
+   3.931620519324851*^9}, {3.931620564666319*^9, 3.931620615920774*^9}, {
+   3.9316208545400047`*^9, 3.931620889354945*^9}},
+ CellID->1924755906,ExpressionUUID->"8a1f5dc0-be01-49ef-84b7-882322557e13"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"diffuseEvolvingFlux", "=", 
+    RowBox[{"CascadeEvolving", "[", 
+     RowBox[{"injSpectrum2", ",", "0.1", ",", "rho"}], "]"}]}], ";"}], "//", 
+  "AbsoluteTiming"}], "\[IndentingNewLine]", 
+ RowBox[{"diffuseEvolvingFluxPlot", "=", 
+  RowBox[{"specPlot", "[", "diffuseEvolvingFlux", "]"}]}]}], "Input",
+ CellChangeTimes->{{3.931620832881345*^9, 3.9316208487804127`*^9}, {
+  3.931620897408502*^9, 3.931620902700864*^9}, {3.931620964417906*^9, 
+  3.931620995867179*^9}, {3.931622350038508*^9, 3.931622350501199*^9}},
+ CellID->1658701171,ExpressionUUID->"3c45739b-b6cb-4a06-96a7-5a3bf279f9ac"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Data Output: Exporting and Polished Plots", "Chapter",
+ CellChangeTimes->{{3.725285986222968*^9, 3.725286001833995*^9}, {
+  3.725286463538486*^9, 3.7252864786965933`*^9}},
+ CellID->94323667,ExpressionUUID->"117bfc97-6af4-4865-a024-de0836bad520"],
+
+Cell[CellGroupData[{
+
+Cell["Exporting Data", "Section",
+ CellChangeTimes->{{3.7252865363120766`*^9, 3.7252865544547086`*^9}},
+ CellID->165523519,ExpressionUUID->"bd42cc8b-73a7-4b2a-963f-1be57752262e"],
+
+Cell[CellGroupData[{
+
+Cell[TextData[{
+ "Suppose you\[CloseCurlyQuote]re trying to output a file which contains the \
+data you\[CloseCurlyQuote]ve generated using \[Gamma]-Cascade. First, we make \
+a list of ordered pairs consisting of gamma-ray energies and ",
+ Cell[BoxData[
+  FormBox["\[Phi]", TraditionalForm]],ExpressionUUID->
+  "43283be0-f1dc-4274-9437-0755a73e4d11"],
+ " at those energies using the \[OpenCurlyDoubleQuote]",
+ StyleBox["Thread", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] function, which merges two lists pairwise. Then, \
+we add to the beginning of that list a pair of informative data labels using \
+the \[OpenCurlyDoubleQuote]",
+ StyleBox["Prepend", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] function. Finally, the \[OpenCurlyDoubleQuote]",
+ StyleBox["Export", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote] command is used to export this list into a \
+\[OpenCurlyDoubleQuote].csv\[CloseCurlyDoubleQuote] file which can be read \
+universally. The code below uses \[OpenCurlyDoubleQuote]",
+ StyleBox["Export", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote], which takes in two arguments: the first is the \
+location and name of the file including the intended extension, the second is \
+the data to export. Note that the location for export is set to use \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["NotebookDirectory", "Input",
+  FontSize->16,
+  FontWeight->"Bold"],
+ "\[CloseCurlyDoubleQuote], which is the location of \[Gamma]-Cascade. To \
+change this, simply replace the first argument with a valid file directory \
+and name, which can be inserted using the \[OpenCurlyDoubleQuote]Insert > \
+File Path\[CloseCurlyDoubleQuote] functionality in the menu above. "
+}], "Subsection",
+ CellChangeTimes->{{3.7252865632680464`*^9, 3.725286883628583*^9}, {
+  3.725287313108186*^9, 3.725287503237442*^9}, {3.7314477448334084`*^9, 
+  3.7314477485512943`*^9}, {3.731451940329068*^9, 3.731451940375191*^9}, {
+  3.731451998440583*^9, 3.731452052660751*^9}, {3.931621541988188*^9, 
+  3.931621547148787*^9}, {3.9316215781647778`*^9, 3.931621603183268*^9}, {
+  3.931621651971805*^9, 3.9316216597729797`*^9}, {3.9316217027280903`*^9, 
+  3.931621747099309*^9}, {3.931621787025312*^9, 3.9316218231488237`*^9}},
+ CellID->218802140,ExpressionUUID->"39f7346c-e493-4b97-ba48-fe7557419280"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"data", "=", 
+   RowBox[{"Thread", "[", 
+    RowBox[{"{", 
+     RowBox[{"energies", ",", "pointSourceFlux"}], "}"}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"data", "=", 
+   RowBox[{"Prepend", "[", 
+    RowBox[{"data", ",", 
+     RowBox[{"{", 
+      RowBox[{
+      "\"\<Gamma-Ray Energy [GeV]\>\"", ",", 
+       "\"\<Differential Flux [GeV^-1 cm^-2 ^-1]\>\""}], "}"}]}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"Export", "[", 
+   RowBox[{
+    RowBox[{"FileNameJoin", "[", 
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"NotebookDirectory", "[", "]"}], ",", 
+       "\"\<DataExample.csv\>\""}], "}"}], "]"}], ",", "data"}], "]"}], 
+  ";"}]}], "Input",
+ CellChangeTimes->{{3.725286895254767*^9, 3.7252869078029876`*^9}, {
+   3.72528693947861*^9, 3.7252871308579793`*^9}, {3.7252872341183105`*^9, 
+   3.725287295656459*^9}, 3.7314519825864286`*^9, {3.736557467560384*^9, 
+   3.736557474656399*^9}, {3.7374673648978148`*^9, 3.737467386439165*^9}, {
+   3.7374677978256807`*^9, 3.737467801028471*^9}, {3.931621683017828*^9, 
+   3.931621683641897*^9}, {3.931621855908905*^9, 3.931621872050632*^9}, 
+   3.9316219053872747`*^9, {3.9316224446944637`*^9, 3.931622449961811*^9}},
+ CellID->379863837,ExpressionUUID->"70ac42ce-e53d-4fbf-91a1-957353799944"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["The \[OpenCurlyDoubleQuote]Show\[CloseCurlyDoubleQuote] Function", \
+"Section",
+ CellChangeTimes->{{3.725286033306157*^9, 3.7252860444014015`*^9}},
+ CellID->809985943,ExpressionUUID->"8b820767-02da-4d41-817f-c643c76776cf"],
+
+Cell[CellGroupData[{
+
+Cell[TextData[{
+ "The \[OpenCurlyDoubleQuote]",
+ StyleBox["Show", "Input",
+  FontSize->16],
+ "\[CloseCurlyDoubleQuote] function can be used to display and format any of \
+the \[OpenCurlyDoubleQuote]",
+ StyleBox["Plot", "Input",
+  FontSize->16],
+ "\[CloseCurlyDoubleQuote] primitives created in the previous examples. In \
+the code below, we display the cascaded point source spectrum \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["pointSourceFluxPlot", "Input",
+  FontSize->16],
+ "\[CloseCurlyDoubleQuote], which is the first argument for the function \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["Show", "Input",
+  FontSize->16],
+ "\[CloseCurlyDoubleQuote]. The proceeding arguments may also be changed in \
+order to change aspects of the frame. Form more information about \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["Show", "Input",
+  FontSize->16],
+ "\[CloseCurlyDoubleQuote] or \[OpenCurlyDoubleQuote]",
+ StyleBox["Plot", "Input",
+  FontSize->16],
+ "\[CloseCurlyDoubleQuote], use the Wolfram Mathematica documentation search \
+function which can be found under the \[OpenCurlyDoubleQuote]Help\
+\[CloseCurlyDoubleQuote] tab in the menu above."
+}], "Subsection",
+ CellChangeTimes->{{3.725286052605124*^9, 3.7252862397028036`*^9}, 
+   3.931621923192458*^9, {3.931622295572295*^9, 3.931622304882463*^9}, {
+   3.931622395652714*^9, 3.931622395889592*^9}},
+ CellID->1870201,ExpressionUUID->"89c08f18-ac5f-4f44-886e-7ab76c04ecd3"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"ticks", "=", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{
+        RowBox[{"Flatten", "[", 
+         RowBox[{
+          RowBox[{"{", 
+           RowBox[{
+            RowBox[{"Table", "[", 
+             RowBox[{
+              RowBox[{"{", 
+               RowBox[{
+                SuperscriptBox["10", "x"], ",", 
+                SuperscriptBox["\"\<10\>\"", 
+                 RowBox[{"ToString", "[", "x", "]"}]]}], "}"}], ",", 
+              RowBox[{"{", 
+               RowBox[{"x", ",", 
+                RowBox[{"-", "100"}], ",", "100"}], "}"}]}], "]"}], ",", 
+            RowBox[{"Flatten", "[", 
+             RowBox[{
+              RowBox[{"Table", "[", 
+               RowBox[{
+                RowBox[{"{", 
+                 RowBox[{
+                  RowBox[{"y", "*", 
+                   SuperscriptBox["10", "x"]}], ",", "\"\<\>\""}], "}"}], ",", 
+                RowBox[{"{", 
+                 RowBox[{"y", ",", "2", ",", "9"}], "}"}], ",", 
+                RowBox[{"{", 
+                 RowBox[{"x", ",", 
+                  RowBox[{"-", "100"}], ",", "100"}], "}"}]}], "]"}], ",", 
+              "1"}], "]"}]}], "}"}], ",", "1"}], "]"}], ",", "None"}], "}"}], 
+      ",", "\[IndentingNewLine]", 
+      RowBox[{"{", 
+       RowBox[{
+        RowBox[{"Flatten", "[", 
+         RowBox[{
+          RowBox[{"{", 
+           RowBox[{
+            RowBox[{"{", 
+             RowBox[{"{", 
+              RowBox[{
+              "0.1", " ", ",", 
+               "\"\<\!\(\*SuperscriptBox[\(10\), \(\(\\\ \)\(-1\)\)]\)\>\""}],
+               "}"}], "}"}], ",", 
+            RowBox[{"{", 
+             RowBox[{"{", 
+              RowBox[{"1", " ", ",", "\"\<1\>\""}], "}"}], "}"}], ",", 
+            RowBox[{"Table", "[", 
+             RowBox[{
+              RowBox[{"{", 
+               RowBox[{
+                SuperscriptBox["10", "x"], ",", 
+                SuperscriptBox["\"\<10\>\"", 
+                 RowBox[{"ToString", "[", "x", "]"}]]}], "}"}], ",", 
+              RowBox[{"{", 
+               RowBox[{"x", ",", "1", ",", "12", ",", "1"}], "}"}]}], "]"}], 
+            ",", 
+            RowBox[{"Flatten", "[", 
+             RowBox[{
+              RowBox[{"Table", "[", 
+               RowBox[{
+                RowBox[{"{", 
+                 RowBox[{
+                  RowBox[{"y", "*", 
+                   SuperscriptBox["10", "x"]}], ",", "\"\<\>\""}], "}"}], ",", 
+                RowBox[{"{", 
+                 RowBox[{"y", ",", "2", ",", "9"}], "}"}], ",", 
+                RowBox[{"{", 
+                 RowBox[{"x", ",", 
+                  RowBox[{"-", "100"}], ",", "100"}], "}"}]}], "]"}], ",", 
+              "1"}], "]"}]}], "}"}], ",", "1"}], "]"}], "\[IndentingNewLine]",
+         ",", "None"}], "}"}]}], "}"}]}], ";"}], 
+  "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"p1", "=", 
+   RowBox[{"LogLogPlot", "[", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"Interpolation", "[", 
+       RowBox[{"Thread", "[", 
+        RowBox[{"{", 
+         RowBox[{"energies", ",", 
+          RowBox[{
+           SuperscriptBox["energies", "2"], "attenuatedFlux"}]}], "}"}], 
+        "]"}], "]"}], "[", "x", "]"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"x", ",", 
+       SuperscriptBox["10", 
+        RowBox[{"-", "1"}]], ",", 
+       SuperscriptBox["10", "12"]}], "}"}], ",", "\[IndentingNewLine]", 
+     RowBox[{"PlotRange", "\[Rule]", 
+      RowBox[{"{", 
+       RowBox[{
+        RowBox[{"{", 
+         RowBox[{"0.1", ",", 
+          SuperscriptBox["10", "6"]}], "}"}], ",", 
+        RowBox[{"{", 
+         RowBox[{
+          SuperscriptBox["10", 
+           RowBox[{"-", "13"}]], ",", 
+          SuperscriptBox["10", 
+           RowBox[{"-", "9"}]]}], "}"}]}], "}"}]}], ",", 
+     "\[IndentingNewLine]", 
+     RowBox[{"PlotStyle", "\[Rule]", 
+      RowBox[{"{", 
+       RowBox[{"Red", ",", "Thick"}], "}"}]}], ",", "\[IndentingNewLine]", 
+     RowBox[{"FrameTicks", "\[Rule]", "ticks"}]}], "\[IndentingNewLine]", 
+    "]"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"p2", "=", 
+    RowBox[{"LogLogPlot", "[", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"Interpolation", "[", 
+        RowBox[{"Thread", "[", 
+         RowBox[{"{", 
+          RowBox[{"energies", ",", 
+           RowBox[{
+            SuperscriptBox["energies", "2"], "pointSourceFlux"}]}], "}"}], 
+         "]"}], "]"}], "[", "x", "]"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"x", ",", 
+        SuperscriptBox["10", 
+         RowBox[{"-", "1"}]], ",", 
+        SuperscriptBox["10", "12"]}], "}"}], ",", "\[IndentingNewLine]", 
+      RowBox[{"PlotRange", "\[Rule]", 
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"{", 
+          RowBox[{"0.1", ",", 
+           SuperscriptBox["10", "6"]}], "}"}], ",", 
+         RowBox[{"{", 
+          RowBox[{
+           SuperscriptBox["10", 
+            RowBox[{"-", "13"}]], ",", 
+           SuperscriptBox["10", 
+            RowBox[{"-", "9"}]]}], "}"}]}], "}"}]}], ",", 
+      "\[IndentingNewLine]", 
+      RowBox[{"PlotStyle", "\[Rule]", 
+       RowBox[{"{", 
+        RowBox[{"Blue", ",", "Thick"}], "}"}]}], ",", "\[IndentingNewLine]", 
+      RowBox[{"FrameTicks", "\[Rule]", "ticks"}]}], "\[IndentingNewLine]", 
+     "]"}]}], ";"}], "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
+ RowBox[{"Show", "[", 
+  RowBox[{"p2", ",", "p1", ",", "\[IndentingNewLine]", 
+   RowBox[{"Axes", "\[Rule]", "False"}], ",", "\[IndentingNewLine]", 
+   RowBox[{"Frame", "\[Rule]", "True"}], ",", "\[IndentingNewLine]", 
+   RowBox[{"FrameStyle", "\[Rule]", " ", 
+    RowBox[{"Thickness", "[", "0.004", "]"}]}], ",", "\[IndentingNewLine]", 
+   RowBox[{"FrameTicksStyle", "\[Rule]", " ", 
+    RowBox[{"Thickness", "[", "0.004", "]"}]}], ",", "\[IndentingNewLine]", 
+   RowBox[{"FrameLabel", "\[Rule]", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{
+       "\"\<\!\(\*SuperscriptBox[SubscriptBox[\(E\), \(\[Gamma]\)], \
+\(2\)]\)\!\(\*SubscriptBox[\(\[Phi]\), \(\[Gamma]\)]\) [GeV \
+\!\(\*SuperscriptBox[\(cm\), \(-2\)]\) \!\(\*SuperscriptBox[\(s\), \(-1\)]\)]\
+\>\"", ",", "None"}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{
+       "\"\<\!\(\*SubscriptBox[\(E\), \(\[Gamma]\)]\) [GeV]\>\"", ",", 
+        "None"}], "}"}]}], "}"}]}], ",", "\[IndentingNewLine]", 
+   RowBox[{"LabelStyle", "\[Rule]", " ", 
+    RowBox[{"Directive", "[", 
+     RowBox[{"Bold", ",", "Black", ",", 
+      RowBox[{"FontFamily", "\[Rule]", " ", "\"\<Helvetica\>\""}], ",", 
+      RowBox[{"FontSize", "\[Rule]", " ", "14"}]}], "]"}]}], ",", 
+   "\[IndentingNewLine]", 
+   RowBox[{"ImageSize", "\[Rule]", "Large"}]}], "\[IndentingNewLine]", 
+  "]"}]}], "Input",
+ CellChangeTimes->{
+  3.7243776259565887`*^9, {3.7243778853135786`*^9, 3.724377905116062*^9}, {
+   3.7243780209861803`*^9, 3.7243780659464836`*^9}, {3.724380172322147*^9, 
+   3.7243802074196215`*^9}, 3.7243806126073537`*^9, {3.724380718792102*^9, 
+   3.7243807219687138`*^9}, {3.7243807698972726`*^9, 
+   3.7243807906668377`*^9}, {3.724430131910561*^9, 3.7244301324415197`*^9}, {
+   3.72443284509657*^9, 3.724432858569062*^9}, {3.7244338174271803`*^9, 
+   3.7244338189751477`*^9}, {3.7244342211161633`*^9, 3.724434221413102*^9}, {
+   3.72443596172503*^9, 3.724435962279344*^9}, {3.724436078004608*^9, 
+   3.7244360886400213`*^9}, {3.724436785591798*^9, 3.724437402785071*^9}, {
+   3.7244375210994596`*^9, 3.7244375328592577`*^9}, {3.724438496577916*^9, 
+   3.7244385409549522`*^9}, {3.7250410230203247`*^9, 
+   3.7250410518791585`*^9}, {3.7250564991283035`*^9, 3.7250565901693172`*^9}, 
+   3.725286132582053*^9, 3.7252875389442973`*^9, 3.7268577721997604`*^9, {
+   3.726857808684019*^9, 3.7268578170893145`*^9}, {3.726857854807129*^9, 
+   3.7268580787085643`*^9}, {3.7268585176834345`*^9, 
+   3.7268585282724333`*^9}, {3.7268585974404955`*^9, 
+   3.7268586295207043`*^9}, {3.7268589288622084`*^9, 3.726858944863634*^9}, {
+   3.7268593716692147`*^9, 3.7268594557850647`*^9}, {3.726861664937642*^9, 
+   3.726861779583939*^9}, {3.726861813019782*^9, 3.7268618949726653`*^9}, {
+   3.72686212571367*^9, 3.72686234057664*^9}, {3.726862445793312*^9, 
+   3.726862474055211*^9}, 3.7268625184554124`*^9, {3.7268626228903494`*^9, 
+   3.7268627731570463`*^9}, {3.72686281769722*^9, 3.7268628811432967`*^9}, {
+   3.726862928622958*^9, 3.7268629374787436`*^9}, {3.7298864322822127`*^9, 
+   3.729886472357792*^9}, 3.7298865082888165`*^9, {3.7298866160011444`*^9, 
+   3.729886623184512*^9}, {3.7298866678371663`*^9, 3.7298866810737123`*^9}, {
+   3.7298867423028507`*^9, 3.729886807861002*^9}, {3.72988723798293*^9, 
+   3.729887240504403*^9}, {3.7298906787869225`*^9, 3.729890703817034*^9}, {
+   3.7298907414506307`*^9, 3.729890744359573*^9}, {3.7298908443929133`*^9, 
+   3.7298908806834755`*^9}, {3.7298910222402973`*^9, 
+   3.7298910224823236`*^9}, {3.7298910823390245`*^9, 
+   3.7298911172787676`*^9}, {3.7298911893446693`*^9, 
+   3.7298911897022333`*^9}, {3.7299131375487814`*^9, 
+   3.7299132203463726`*^9}, {3.7299132722195854`*^9, 
+   3.7299133662263994`*^9}, {3.729913480437415*^9, 3.729913482322739*^9}, 
+   3.730207939409786*^9, {3.7302079753958697`*^9, 3.7302079909211416`*^9}, {
+   3.7302080832482796`*^9, 3.7302081791702423`*^9}, {3.7302082296563873`*^9, 
+   3.730208243312564*^9}, {3.730208451598036*^9, 3.7302085023040886`*^9}, {
+   3.730208602283304*^9, 3.7302086052094235`*^9}, {3.7311066826849594`*^9, 
+   3.731106713861102*^9}, {3.7311067550613885`*^9, 3.7311068363556547`*^9}, {
+   3.7311068787897553`*^9, 3.731106898233818*^9}, {3.731108821075424*^9, 
+   3.731108840129782*^9}, 3.731109078311664*^9, {3.7311091661396103`*^9, 
+   3.731109176034822*^9}, {3.7311576038740425`*^9, 3.7311577061209106`*^9}, {
+   3.731157950504712*^9, 3.7311579704718027`*^9}, {3.7313505806357365`*^9, 
+   3.7313506043558073`*^9}, {3.7313506780928693`*^9, 3.731350759308818*^9}, {
+   3.7314134982443905`*^9, 3.731413525394582*^9}, {3.7314482261804447`*^9, 
+   3.7314482382194557`*^9}, 3.731448307603217*^9, {3.731452134337926*^9, 
+   3.731452155468133*^9}, {3.731452190846178*^9, 3.731452191578124*^9}, {
+   3.7356736611485696`*^9, 3.7356736706940565`*^9}, {3.7356886518731203`*^9, 
+   3.7356886595376062`*^9}, {3.7356887151313763`*^9, 
+   3.7356887155944605`*^9}, {3.735830070922203*^9, 3.7358300829248085`*^9}, {
+   3.735865358308464*^9, 3.735865376866975*^9}, {3.73586546714151*^9, 
+   3.735865467377345*^9}, {3.7358744695223885`*^9, 3.735874499946562*^9}, 
+   3.735874540417596*^9, {3.735967523258369*^9, 3.7359675260242414`*^9}, 
+   3.735967566234417*^9, {3.7365483396165857`*^9, 3.7365483442601643`*^9}, {
+   3.736550193488392*^9, 3.73655033424799*^9}, {3.736552773205906*^9, 
+   3.7365528071520844`*^9}, {3.7365539095620146`*^9, 3.736553940218992*^9}, {
+   3.7365575087830935`*^9, 3.7365575192121916`*^9}, {3.7365591634540854`*^9, 
+   3.736559165604334*^9}, {3.7373130797038116`*^9, 3.737313125737836*^9}, {
+   3.737380487669223*^9, 3.737380560192876*^9}, {3.931622410629078*^9, 
+   3.931622440421997*^9}, {3.931622481995632*^9, 3.931622513854669*^9}},
+ CellLabel->"In[43]:=",
+ CellID->231790629,ExpressionUUID->"c254ee35-554e-47c9-bae4-d7134b4253fb"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Advanced \[Gamma]-Cascade Features", "Chapter",
+ CellChangeTimes->{{3.725285986222968*^9, 3.725286001833995*^9}, {
+  3.725286463538486*^9, 3.7252864786965933`*^9}, {3.9316210842706747`*^9, 
+  3.931621093931864*^9}},
+ CellID->2001100087,ExpressionUUID->"a9f252b8-e4b5-4fb0-90d6-cf5bc7345518"],
+
+Cell[CellGroupData[{
+
+Cell["Changing the EBL Model", "Section",
+ CellChangeTimes->{{3.7258064679220734`*^9, 3.725806504617673*^9}, {
+  3.931621097209466*^9, 3.931621114366129*^9}},
+ CellID->267528754,ExpressionUUID->"fc8e851d-29f3-4cb5-a6d8-ea0a1874c522"],
+
+Cell[CellGroupData[{
+
+Cell[TextData[{
+ "By default, the extragalactic background light (EBL) model considered in \
+the simulations of \[Gamma]-Cascade is the best-fit model by Saldana-Lopez ",
+ StyleBox["et al.",
+  FontSlant->"Italic"],
+ " (2021) [arXiv:2012.03035]. Nevertheless, \[Gamma]-Cascade includes a \
+variety of other EBL models available for the user, with easy \
+interchangeability between them by using the \[OpenCurlyDoubleQuote]",
+ StyleBox["changeEBLModel", "Input",
+  FontSize->16],
+ "\[CloseCurlyDoubleQuote] function.\n\nEach EBL model is associated to an \
+integer index, from 0 to 6, which are:\n0 - No EBL (CMB only),\n1 (default) - \
+Saldana-Lopez ",
+ StyleBox["et al.",
+  FontSlant->"Italic"],
+ " (2021) [arXiv:2012.03035] best fit,\n2 - Saldana-Lopez ",
+ StyleBox["et al.",
+  FontSlant->"Italic"],
+ " (2021) [arXiv:2012.03035] 1\[Sigma] upper limit,\n3 - Saldana-Lopez ",
+ StyleBox["et al.",
+  FontSlant->"Italic"],
+ " (2021) [arXiv:2012.03035] 1\[Sigma] lower limit,\n4 - Finke ",
+ StyleBox["et al.",
+  FontSlant->"Italic"],
+ " (2022) [2210.01157],\n5 - Franceschini and Rodighiero (2017) [1705.10256],\
+\n6 - Dom\[IAcute]nguez ",
+ StyleBox["et al.",
+  FontSlant->"Italic"],
+ " (2011) [1007.1495], used in previous versions of \[Gamma]-Cascade V3.\n\n\
+EBL models can be changed back and forth without the need of restarting the \
+Mathematica kernel. \[OpenCurlyDoubleQuote]",
+ StyleBox["changeEBLModel[EBL index]", "Input",
+  FontSize->16],
+ "\[CloseCurlyDoubleQuote] takes in the index of the EBL model one wishes to \
+change to. As an example below, we change the EBL model used in all \
+\[Gamma]-Cascade simulations to the one by Finke ",
+ StyleBox["et al.",
+  FontSlant->"Italic"],
+ " (2022)."
+}], "Subsection",
+ CellChangeTimes->{{3.7258065130049925`*^9, 3.725806651280905*^9}, {
+  3.7258069341705933`*^9, 3.725807016848576*^9}, {3.725807106591369*^9, 
+  3.725807476774333*^9}, {3.7258081014816027`*^9, 3.7258082240397143`*^9}, {
+  3.7314477504423513`*^9, 3.7314477505917196`*^9}, {3.931622555917325*^9, 
+  3.931622720443078*^9}, {3.9316227767090273`*^9, 3.9316228201931763`*^9}, {
+  3.931622867486053*^9, 3.931622946045355*^9}, {3.93162298845013*^9, 
+  3.93162317188474*^9}, {3.9316232271187143`*^9, 3.931623228463546*^9}, {
+  3.931624577626329*^9, 3.93162506552416*^9}, {3.931625661271017*^9, 
+  3.93162566191951*^9}, {3.9316259165934143`*^9, 3.931625918044675*^9}},
+ CellID->1238070747,ExpressionUUID->"035dd2cb-1e7c-42bd-a3f0-155d28a8abc1"],
+
+Cell[BoxData[
+ RowBox[{"changeEBLModel", "[", "4", "]"}]], "Input",
+ CellChangeTimes->{{3.931625005176343*^9, 3.9316250073437777`*^9}},
+ CellID->1839989822,ExpressionUUID->"1186f840-34c8-4b20-a152-8dad9752d854"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Changing the Magnetic Field", "Section",
+ CellChangeTimes->{{3.7258064679220734`*^9, 3.725806504617673*^9}, {
+  3.931621097209466*^9, 3.93162113336547*^9}},
+ CellID->34367459,ExpressionUUID->"4df32f1c-9be7-4ce0-a56b-23f70bce5455"],
+
+Cell[CellGroupData[{
+
+Cell[TextData[{
+ "While the physical (not comoving) intergalactic magnetic field in \
+\[Gamma]-Cascade is set by default to ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    RowBox[{"B", "(", "z", ")"}], "=", 
+    RowBox[{
+     SubscriptBox["B", "0"], "\[Times]", 
+     SuperscriptBox[
+      RowBox[{"(", 
+       RowBox[{"1", "+", "z"}], ")"}], 
+      RowBox[{"-", "\[CapitalGamma]"}]]}]}], TraditionalForm]],ExpressionUUID->
+  "435b1458-a5fb-4392-bc0b-8792addab655"],
+ ", with ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    SubscriptBox["B", "0"], "=", 
+    SuperscriptBox["10", 
+     RowBox[{"-", "12"}]]}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "859d98aa-ed29-43fb-8de0-40b2de447455"],
+ " G and ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"\[CapitalGamma]", "=", 
+    RowBox[{"-", "2"}]}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "4c27ba37-8aca-4714-82ae-0ea0392806c8"],
+ ", it is possible to change this value for an EBL model of choice via the \
+\[OpenCurlyDoubleQuote]",
+ StyleBox["changeMagneticField", "Input",
+  FontSize->16],
+ "\[CloseCurlyDoubleQuote] function. However, due to the nature of the code, \
+\[Gamma]-Cascade needs to modify part of its library in order to implement \
+the change. Namely, it changes the \[OpenCurlyDoubleQuote]cyclespecX.mat\
+\[CloseCurlyDoubleQuote] file inside the \[OpenCurlyDoubleQuote]cycle-spec\
+\[CloseCurlyDoubleQuote] directory of the main library corresponding to the \
+chosen EBL model X, and renames the previous one by prepending it with \
+\[OpenCurlyDoubleQuote]bak_\[CloseCurlyDoubleQuote]. After the process is \
+complete, it is recommended to save the renamed file in a different location, \
+to avoid it being overwritten if the magnetic field for that EBL model is \
+ever changed again.\n\nThe function \[OpenCurlyDoubleQuote]",
+ StyleBox["changeMagneticField[", "Input",
+  FontSize->16],
+ Cell[BoxData[
+  FormBox[
+   SubscriptBox["B", "0"], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "da6b0d7e-7042-40a6-84df-7b9c1063c750"],
+ ", ",
+ Cell[BoxData[
+  FormBox["\[CapitalGamma]", TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "e53c05ab-76f9-49f9-9539-234bc1d58039"],
+ ", ",
+ StyleBox["EBL index", "Input",
+  FontSize->16],
+ StyleBox["]", "Input",
+  FontSize->16],
+ "\[CloseCurlyDoubleQuote] changes the physical magnetic field for the EBL \
+model with index \[OpenCurlyDoubleQuote]",
+ StyleBox["EBL index", "Input",
+  FontSize->16],
+ "\[CloseCurlyDoubleQuote] to ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    RowBox[{"B", "(", "z", ")"}], "=", 
+    RowBox[{
+     SubscriptBox["B", "0"], "\[Times]", 
+     SuperscriptBox[
+      RowBox[{"(", 
+       RowBox[{"1", "+", "z"}], ")"}], 
+      RowBox[{"-", "\[CapitalGamma]"}]]}]}], TraditionalForm]],ExpressionUUID->
+  "22f07311-dfac-486d-b52d-a71db931d6bd"],
+ ". The first argument is the magnetic field at redshift zero, in Gauss, and \
+the second the index governing its redshift evolution. In the example below, \
+we change the magnetic field in \[Gamma]-Cascade for the best-fit \
+Saldana-Lopez ",
+ StyleBox["et al.",
+  FontSlant->"Italic"],
+ " EBL model to a constant ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    RowBox[{"B", "(", "z", ")"}], "=", "1"}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "7cf6c325-3a4d-41d9-82a0-ec66ff30c3f5"],
+ " nG. This process will take around 5-10 minutes to complete.\n\n",
+ StyleBox["Be careful",
+  FontWeight->"Bold"],
+ ": if you run this simulation and then wish to bring \[Gamma]-Cascade back \
+to its default settings, you should go into the \
+\[OpenCurlyDoubleQuote]cycle-spec\[CloseCurlyDoubleQuote] directory, delete \
+the \[OpenCurlyDoubleQuote]cyclespecSL.mat\[CloseCurlyDoubleQuote] file and \
+rename the \[OpenCurlyDoubleQuote]bak_cyclespecSL.mat\[CloseCurlyDoubleQuote] \
+back to \[OpenCurlyDoubleQuote]cyclespecSL.mat\[CloseCurlyDoubleQuote]."
+}], "Subsection",
+ CellChangeTimes->{{3.7258065130049925`*^9, 3.725806651280905*^9}, {
+   3.7258069341705933`*^9, 3.725807016848576*^9}, {3.725807106591369*^9, 
+   3.725807476774333*^9}, {3.7258081014816027`*^9, 3.7258082240397143`*^9}, {
+   3.7314477504423513`*^9, 3.7314477505917196`*^9}, {3.931622555917325*^9, 
+   3.9316226511389112`*^9}, {3.931625099605524*^9, 3.931625099946776*^9}, {
+   3.931625142824143*^9, 3.931625197107706*^9}, {3.93162524041901*^9, 
+   3.9316252613726053`*^9}, {3.93162529590828*^9, 3.931625472171673*^9}, {
+   3.931625525720942*^9, 3.931625605665223*^9}, {3.931625640363338*^9, 
+   3.931626177102103*^9}, 3.9316264058287287`*^9, {3.931626458572455*^9, 
+   3.9316264693871117`*^9}},
+ CellID->35518081,ExpressionUUID->"3c03facc-0c5f-4a19-9549-52fe781872cb"],
+
+Cell[BoxData[
+ RowBox[{"changeMagneticField", "[", 
+  RowBox[{
+   SuperscriptBox["10", 
+    RowBox[{"-", "9"}]], ",", "0", ",", "1"}], "]"}]], "Input",
+ CellChangeTimes->{{3.725382175508709*^9, 3.725382226021103*^9}, {
+   3.725382643098403*^9, 3.725382645056896*^9}, {3.72538332354777*^9, 
+   3.7253833248512506`*^9}, {3.725807762897604*^9, 3.7258077633729243`*^9}, 
+   3.725808239318348*^9, {3.7258085468215275`*^9, 3.725808547604627*^9}, 
+   3.725808821217619*^9, {3.7258096044093895`*^9, 3.7258096050230217`*^9}, {
+   3.931626182085026*^9, 3.931626195281753*^9}},
+ CellID->106654732,ExpressionUUID->"ea126fbd-94f2-40c3-b76a-c85f3ae90c03"]
+}, Open  ]],
+
+Cell[TextData[{
+ StyleBox["There is no need to rerun the import command", "Subsection"],
+ " \[OpenCurlyDoubleQuote]",
+ StyleBox["<<GCascadeV4.wl", "Input",
+  FontSize->16],
+ "\[CloseCurlyDoubleQuote], the code will already be ready to simulate \
+cascades under the new magnetic field.\n\nIt should be noted that changing \
+the magnetic field to anything under about 0.1 nG will leave the calculations \
+largely unchanged, and will only affect the highest energies, ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{"E", ">", 
+    SuperscriptBox["10", "19"]}], TraditionalForm]],
+  FormatType->TraditionalForm,ExpressionUUID->
+  "a0ee1d53-c6ec-48dd-a7cd-d91f952177d9"],
+ " eV. Thus, in general, changing the magnetic field is not recommended."
+}], "Subsection",
+ CellChangeTimes->{{3.7258065130049925`*^9, 3.725806651280905*^9}, {
+  3.7258069341705933`*^9, 3.725807016848576*^9}, {3.725807106591369*^9, 
+  3.725807476774333*^9}, {3.7258081014816027`*^9, 3.7258082240397143`*^9}, {
+  3.7314477504423513`*^9, 3.7314477505917196`*^9}, {3.931622555917325*^9, 
+  3.9316226511389112`*^9}, {3.931625099605524*^9, 3.931625099946776*^9}, {
+  3.931625142824143*^9, 3.931625197107706*^9}, {3.93162524041901*^9, 
+  3.9316252613726053`*^9}, {3.93162529590828*^9, 3.931625472171673*^9}, {
+  3.931625525720942*^9, 3.931625605665223*^9}, {3.931625640363338*^9, 
+  3.931626177102103*^9}, {3.9316262668466883`*^9, 3.9316263974215107`*^9}, {
+  3.931626443939324*^9, 3.931626444389018*^9}},
+ CellID->1802366226,ExpressionUUID->"a30a5e64-3550-4940-8052-64ed13f75e44"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+},
+Evaluator->"Local",
+WindowSize->{1232, 805},
+WindowMargins->{{Automatic, 0}, {Automatic, 0}},
+TaggingRules->{"$testsRun" -> False, "TryRealOnly" -> False},
+Magnification:>1.3 Inherited,
+FrontEndVersion->"12.3 for Mac OS X ARM (64-bit) (July 9, 2021)",
+StyleDefinitions->FrontEnd`FileName[{"MUnit"}, "MUnit.nb", CharacterEncoding -> 
+  "UTF-8"],
+ExpressionUUID->"f4bc0b60-cce0-485b-a886-b3f11639b250"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 367, 5, 126, "Title",ExpressionUUID->"da265509-a8d4-4324-8bfe-425a1de32681",
+ CellID->99529794],
+Cell[CellGroupData[{
+Cell[972, 31, 1044, 15, 366, "Subchapter",ExpressionUUID->"506d7f65-6c60-49bb-b6b2-ea2c9ca444b2",
+ CellID->169207782],
+Cell[CellGroupData[{
+Cell[2041, 50, 285, 6, 96, "Section",ExpressionUUID->"d31c9ffc-8199-445a-895c-21c1dd331ea7",
+ CellID->95071794],
+Cell[CellGroupData[{
+Cell[2351, 60, 658, 10, 141, "Subsection",ExpressionUUID->"0d528ea2-49ee-4558-8bd6-ce2aac46b28f",
+ CellID->4253156],
+Cell[3012, 72, 279, 8, 39, "Input",ExpressionUUID->"36674ca9-ab23-402a-b2b1-af3ec67ae0d9",
+ CellID->598119939]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[3328, 85, 928, 15, 141, "Subsection",ExpressionUUID->"b03fa9bc-ed56-4b40-86c9-50c8c7eb6a91",
+ CellID->476640968],
+Cell[4259, 102, 155, 3, 39, "Input",ExpressionUUID->"64a8f0b5-cc07-460f-be05-f482bbdee4c5",
+ CellID->471090524]
+}, Open  ]]
+}, Open  ]],
+Cell[4441, 109, 383, 5, 96, "Section",ExpressionUUID->"1516cf4e-a82f-41f7-ae3a-8277cdefb687",
+ CellID->256563983],
+Cell[CellGroupData[{
+Cell[4849, 118, 178, 2, 66, "Section",ExpressionUUID->"5dc9e800-2eec-4c84-b09d-d55aadd46a5d",
+ CellID->43342969],
+Cell[CellGroupData[{
+Cell[5052, 124, 8752, 231, 620, "Subsection",ExpressionUUID->"1d4eb0a3-2358-404f-b181-7623bf1aea36",
+ CellID->247095694],
+Cell[13807, 357, 646, 18, 70, "Input",ExpressionUUID->"7d6444af-79fa-42f7-b257-400a169ed014",
+ CellID->365173223]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[14490, 380, 4522, 131, 230, "Subsection",ExpressionUUID->"2ee5e24e-d971-4a4b-bee3-777c62a0373f",
+ CellID->113528703],
+Cell[19015, 513, 181, 3, 39, "Input",ExpressionUUID->"df13dc8a-2e54-4a0c-8d4a-99ccad179e1d",
+ CellID->1765046269]
+}, Open  ]],
+Cell[19211, 519, 1525, 25, 106, "Subsection",ExpressionUUID->"5d549927-df09-4022-9bc8-cc91e45a1945",
+ CellID->687932137]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[20773, 549, 321, 4, 85, "Section",ExpressionUUID->"b684b95c-bb7e-4f0c-8e84-41d953454be3",
+ CellID->728503807],
+Cell[CellGroupData[{
+Cell[21119, 557, 6221, 168, 708, "Subsection",ExpressionUUID->"7adb2181-75e1-4964-8932-68f07fd9fa79",
+ CellID->1008529967],
+Cell[27343, 727, 2541, 39, 67, "Input",ExpressionUUID->"10f53e9e-e254-4837-9357-6ddc479591e6",
+ CellID->1961883585]
+}, Open  ]],
+Cell[29899, 769, 1295, 25, 106, "Subsection",ExpressionUUID->"374c8e1d-6e52-49bf-b065-4e70622f1f36",
+ CellID->1317283503]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[31231, 799, 245, 3, 85, "Section",ExpressionUUID->"552e248b-1b24-46de-8cea-36906612dac6",
+ CellID->297973296],
+Cell[CellGroupData[{
+Cell[31501, 806, 4279, 103, 361, "Subsection",ExpressionUUID->"77684371-9601-4f15-a172-4f3a6dfe6f1f",
+ CellID->22936097],
+Cell[35783, 911, 396, 9, 67, "Input",ExpressionUUID->"d2757d06-9d8a-477c-b90a-419da2d36e4e",
+ CellID->1668350599]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[36228, 926, 343, 4, 85, "Section",ExpressionUUID->"d3b1490f-87f5-4c93-9b68-d9be7e957961",
+ CellID->243349693],
+Cell[CellGroupData[{
+Cell[36596, 934, 4342, 95, 475, "Subsection",ExpressionUUID->"b514389b-3819-4c09-957c-80e55adefe77",
+ CellID->79685355],
+Cell[40941, 1031, 513, 11, 94, "Input",ExpressionUUID->"8355ee64-a52f-4928-93d7-ae4ec459d334",
+ CellID->1914850350]
+}, Open  ]]
+}, Open  ]],
+Cell[41481, 1046, 396, 5, 96, "Section",ExpressionUUID->"d4d76043-ce76-4a4f-b11a-aeaede15d91b",
+ CellID->950667981],
+Cell[CellGroupData[{
+Cell[41902, 1055, 321, 4, 66, "Section",ExpressionUUID->"e2ee105f-5f8e-4c81-9f05-598ef6ca1163",
+ CellID->20797861],
+Cell[CellGroupData[{
+Cell[42248, 1063, 7629, 166, 479, "Subsection",ExpressionUUID->"ef4078cd-9d91-4348-bbd5-a66f833326c2",
+ CellID->234064909],
+Cell[49880, 1231, 1185, 32, 97, "Input",ExpressionUUID->"a207016c-6c41-4c31-bb45-1a5d06898186",
+ CellID->237827299]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[51102, 1268, 7382, 164, 432, "Subsection",ExpressionUUID->"347d0221-3fdb-416c-bf0f-7533a640bb8e",
+ CellID->1074345571],
+Cell[58487, 1434, 422, 10, 67, "Input",ExpressionUUID->"8d266692-7760-4c4b-85c5-a401f5085ab0",
+ CellID->1407002315]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[58946, 1449, 4585, 77, 212, "Subsection",ExpressionUUID->"1c3cccbb-8f2e-42cb-b952-d344715cbc6c",
+ CellID->1895889613],
+Cell[63534, 1528, 521, 11, 67, "Input",ExpressionUUID->"0d3c3d90-e893-41e8-8788-e40e4c7de49e",
+ CellID->1722593754],
+Cell[64058, 1541, 519, 11, 67, "Input",ExpressionUUID->"16ca33b5-adab-40e4-a953-74b4001838c6",
+ CellID->371794818]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[64626, 1558, 318, 4, 85, "Section",ExpressionUUID->"3d3cb475-3bb4-40e6-b5b7-37172e34fa49",
+ CellID->926635129],
+Cell[CellGroupData[{
+Cell[64969, 1566, 8789, 194, 529, "Subsection",ExpressionUUID->"2c59ce83-6425-44d5-bd0b-eb31858033cf",
+ CellID->2026683901],
+Cell[73761, 1762, 1154, 30, 100, "Input",ExpressionUUID->"81e7140d-2f6c-4239-aaf5-cd800d100b10",
+ CellID->1396620194]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[74952, 1797, 5786, 105, 250, "Subsection",ExpressionUUID->"8a1f5dc0-be01-49ef-84b7-882322557e13",
+ CellID->1924755906],
+Cell[80741, 1904, 636, 12, 67, "Input",ExpressionUUID->"3c45739b-b6cb-4a06-96a7-5a3bf279f9ac",
+ CellID->1658701171]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[81438, 1923, 251, 3, 90, "Chapter",ExpressionUUID->"117bfc97-6af4-4865-a024-de0836bad520",
+ CellID->94323667],
+Cell[CellGroupData[{
+Cell[81714, 1930, 178, 2, 85, "Section",ExpressionUUID->"bd42cc8b-73a7-4b2a-963f-1be57752262e",
+ CellID->165523519],
+Cell[CellGroupData[{
+Cell[81917, 1936, 2387, 46, 388, "Subsection",ExpressionUUID->"39f7346c-e493-4b97-ba48-fe7557419280",
+ CellID->218802140],
+Cell[84307, 1984, 1326, 32, 94, "Input",ExpressionUUID->"70ac42ce-e53d-4fbf-91a1-957353799944",
+ CellID->379863837]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[85682, 2022, 228, 3, 85, "Section",ExpressionUUID->"8b820767-02da-4d41-817f-c643c76776cf",
+ CellID->809985943],
+Cell[CellGroupData[{
+Cell[85935, 2029, 1407, 32, 247, "Subsection",ExpressionUUID->"89c08f18-ac5f-4f44-886e-7ab76c04ecd3",
+ CellID->1870201],
+Cell[87345, 2063, 11125, 240, 784, "Input",ExpressionUUID->"c254ee35-554e-47c9-bae4-d7134b4253fb",
+ CellID->231790629]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[98531, 2310, 297, 4, 90, "Chapter",ExpressionUUID->"a9f252b8-e4b5-4fb0-90d6-cf5bc7345518",
+ CellID->2001100087],
+Cell[CellGroupData[{
+Cell[98853, 2318, 233, 3, 85, "Section",ExpressionUUID->"fc8e851d-29f3-4cb5-a6d8-ea0a1874c522",
+ CellID->267528754],
+Cell[CellGroupData[{
+Cell[99111, 2325, 2454, 49, 671, "Subsection",ExpressionUUID->"035dd2cb-1e7c-42bd-a3f0-155d28a8abc1",
+ CellID->1238070747],
+Cell[101568, 2376, 211, 3, 39, "Input",ExpressionUUID->"1186f840-34c8-4b20-a152-8dad9752d854",
+ CellID->1839989822]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[101828, 2385, 236, 3, 85, "Section",ExpressionUUID->"4df32f1c-9be7-4ce0-a56b-23f70bce5455",
+ CellID->34367459],
+Cell[CellGroupData[{
+Cell[102089, 2392, 4700, 110, 671, "Subsection",ExpressionUUID->"3c03facc-0c5f-4a19-9549-52fe781872cb",
+ CellID->35518081],
+Cell[106792, 2504, 641, 11, 42, "Input",ExpressionUUID->"ea126fbd-94f2-40c3-b76a-c85f3ae90c03",
+ CellID->106654732]
+}, Open  ]],
+Cell[107448, 2518, 1535, 27, 247, "Subsection",ExpressionUUID->"a30a5e64-3550-4940-8052-64ed13f75e44",
+ CellID->1802366226]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
