@@ -1,13 +1,42 @@
 # GCascade
-gamma-ray propagation package for Wolfram Mathematica created by Carlos Blanco and Antonio Capanema
+This is a gamma-ray propagation package for Wolfram Mathematica created by Carlos Blanco and Antonio Capanema. GCascade uses a semi-analytic  approach to model gamma-ray propagation through cosmological distances accounting for attenuation, the formation of electromagnetic cascades,and redshifting.
 
-Due to LFS file size restrictions, functional libraries must be downloaded from Zenodo. 
+Due to LFS file size restrictions, functional libraries must be downloaded from the [Zenodo repo](https://zenodo.org/doi/10.5281/zenodo.13154969). 
 
-Auxiliary libraries are also mount in the Zenodo repo: https://zenodo.org/doi/10.5281/zenodo.13154969. 
+Auxiliary libraries are also found in the Zenodo repo. Auxiliary libraries are not required, and are provided for references. See the documentation for details. 
+
+# Installation
+
+### Step 1
+
+clone Gamma Cascade repo
+
+````
+git clone https://github.com/GammaCascade/GCascade.git
+````
+
+### Step 2
+Download LibrariesV4 from the [Zenodo repo](https://zenodo.org/doi/10.5281/zenodo.13154969).
+
+### Step 3
+Unzip the LibrariesV4.zip directory into the /GCascade directory. the structure should look as follows:
+````
+/GCascade
+    |-GCascadeV4.wl
+    |-LICENSE
+    |-README.md
+    |-Tutorial.nb
+    |-LibrariesV4
+        |-...
+	|-...
+````
+
+### Step 4
+Open the Tutorial.nb notebook in Mathematica to learn basic usage.
 
 # V4
 
-As of August 6, 2024 a new version of GCascade is available, GCascadeV4. V4 implements an assortment of the most widely used EBL models, significantly improves computational precision, and provides new core functionality. Additionally, there is a new method to estimate the uncertainty due to the EBL model. New Libraries have also been created and uploaded to zenodo under the DOI:10.5281/zenodo.13154970. 
+As of August 6, 2024 a new version of GCascade is available, GCascadeV4. V4 implements an assortment of the most widely used EBL models, significantly improves computational precision, and provides new core functionality. Additionally, there is a new method to estimate the uncertainty due to the EBL model. New Libraries have also been created and uploaded to zenodo under the DOI:[10.5281/zenodo.13154970](https://doi.org/10.5281/zenodo.13154970). 
 
 
 # V3
