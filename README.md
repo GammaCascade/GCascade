@@ -3,7 +3,7 @@ gamma-ray propagation package for Wolfram Mathematica created by Carlos Blanco a
 
 Due to LFS file size restrictions, functional libraries must be downloaded from Zenodo. 
 
-Auxiliary libraries are also mount in the Zenodo repo. 
+Auxiliary libraries are also mount in the Zenodo repo: https://zenodo.org/doi/10.5281/zenodo.13154969. 
 
 # V4
 
