@@ -1,5 +1,5 @@
-# GCascade
-This is a gamma-ray propagation package for Wolfram Mathematica created by Carlos Blanco and Antonio Capanema. GCascade uses a semi-analytic  approach to model gamma-ray propagation through cosmological distances accounting for attenuation, the formation of electromagnetic cascades,and redshifting.
+# $\gamma$-Cascade
+This is a gamma-ray propagation package for Wolfram Mathematica created by Carlos Blanco and Antonio Capanema. $\gamma$-Cascade uses a semi-analytic  approach to model gamma-ray propagation through cosmological distances accounting for attenuation, the formation of electromagnetic cascades,and cosmological redshifting.
 
 Due to LFS file size restrictions, functional libraries must be downloaded from the [Zenodo repo](https://zenodo.org/doi/10.5281/zenodo.13154969). 
 
@@ -9,7 +9,7 @@ Auxiliary libraries are also found in the Zenodo repo. Auxiliary libraries are n
 
 ### Step 1
 
-clone Gamma Cascade repo
+clone $\gamma$-Cascade repo
 
 ````
 git clone https://github.com/GammaCascade/GCascade.git
@@ -36,7 +36,7 @@ Open the Tutorial.nb notebook in Mathematica to learn basic usage.
 
 # V4
 
-As of August 6, 2024 a new version of GCascade is available, GCascadeV4. V4 implements an assortment of the most widely used EBL models, significantly improves computational precision, and provides new core functionality. Additionally, there is a new method to estimate the uncertainty due to the EBL model. New Libraries have also been created and uploaded to zenodo under the DOI:[10.5281/zenodo.13154970](https://doi.org/10.5281/zenodo.13154970). 
+As of August 6, 2024 a new version of $\gamma$-Cascade is available, GCascadeV4. V4 implements an assortment of the most widely used EBL models, significantly improves computational precision, and provides new core functionality. Additionally, there is a new method to estimate the uncertainty due to the EBL model. New Libraries have also been created and uploaded to zenodo under the DOI:[10.5281/zenodo.13154970](https://doi.org/10.5281/zenodo.13154970). 
 
 
 # V3
