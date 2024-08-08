@@ -3,13 +3,13 @@ This is a gamma-ray propagation package for Wolfram Mathematica created by Carlo
 
 Due to LFS file size restrictions, functional libraries must be downloaded from the [Zenodo repo](https://zenodo.org/doi/10.5281/zenodo.13154969). 
 
-Auxiliary libraries are also found in the Zenodo repo. Auxiliary libraries are not required, and are provided for references. See the documentation for details. 
+Auxiliary libraries can also be found in the Zenodo repo. Auxiliary libraries are not required to run $\gamma$-Cascade, and are provided for references. See the documentation for details. 
 
 # Installation
 
 ### Step 1
 
-clone $\gamma$-Cascade repo
+Clone $\gamma$-Cascade repo.
 
 ````
 git clone https://github.com/GammaCascade/GCascade.git
@@ -19,7 +19,7 @@ git clone https://github.com/GammaCascade/GCascade.git
 Download LibrariesV4 from the [Zenodo repo](https://zenodo.org/doi/10.5281/zenodo.13154969).
 
 ### Step 3
-Unzip the LibrariesV4.zip directory into the /GCascade directory. the structure should look as follows:
+Unzip the LibrariesV4.zip directory into the /GCascade directory. The structure should look as follows:
 ````
 /GCascade
     |-GCascadeV4.wl
