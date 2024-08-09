@@ -1,9 +1,9 @@
 # $\gamma$-Cascade
-This is a gamma-ray propagation package for Wolfram Mathematica created by Carlos Blanco and Antonio Capanema. $\gamma$-Cascade uses a semi-analytic  approach to model gamma-ray propagation through cosmological distances accounting for attenuation, the formation of electromagnetic cascades,and cosmological redshifting.
+This is a gamma-ray propagation package for Wolfram Mathematica created by Carlos Blanco and Antonio Capanema. $\gamma$-Cascade uses a semi-analytic  approach to model gamma-ray propagation through cosmological distances accounting for attenuation, the formation of electromagnetic cascades,and cosmological redshifting. Our latest paper that explains the inner workings of this package is also the most up to date documentation: https://arxiv.org/abs/2408.03995.
 
 Due to LFS file size restrictions, functional libraries must be downloaded from the [Zenodo repo](https://zenodo.org/doi/10.5281/zenodo.13154969). 
 
-Auxiliary libraries can also be found in the Zenodo repo. Auxiliary libraries are not required to run $\gamma$-Cascade, and are provided for references. See the documentation for details. 
+Auxiliary libraries can also be found in the Zenodo repo. Auxiliary libraries are not required to run $\gamma$-Cascade, and are provided for references. See the [documentation](https://arxiv.org/abs/2408.03995) for details. 
 
 # Installation
 
