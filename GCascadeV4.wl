@@ -163,7 +163,9 @@ cutoffPowerLaw[enerGamma_,gamma_,cutoff_,amp_] := (amp*enerGamma^-gamma)*Exp[-en
 (*Initialization: directories & arrays*)
 
 packageName="GCascadeV4";
-libraryLocation = FileNameJoin[{NotebookDirectory[],"LibrariesV4"}];
+packageDir=DirectoryName@$InputFileName;
+Print["Package located at ",packageDir];
+libraryLocation = FileNameJoin[{packageDir,"LibrariesV4"}];
 
 (*Default EBL model is Saldana-Lopez 2021*)
 EBLindex=1;
