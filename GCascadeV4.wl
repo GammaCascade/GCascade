@@ -63,6 +63,28 @@ The injected spectrum should be formatted as an array of values \!\(\*FractionBo
 The density distribution should be formatted as an array of values \[Rho](z) [\!\(\*SuperscriptBox[\(cm\), \(-3\)]\)] evaluated at the redshifts given by the diffuseDistances array.
 Distributions with \!\(\*SubscriptBox[\(z\), \(max\)]\) < 10 are not supported by \[Gamma]-Cascade.";
 
+RedshiftEvolving::usage = "RedshiftEvolving[injected spectrum \!\(\*FractionBox[\(dN\), \(dE\)]\)(E,z) [\!\(\*SuperscriptBox[\(GeV\), \(-1\)]\) \!\(\*SuperscriptBox[\(s\), \(-1\)]\)], maximum source redshift \!\(\*SubscriptBox[\(z\), \(max\)]\), redshift distribution (density per comobing volume) of sources \[Rho](z) [\!\(\*SuperscriptBox[\(cm\), \(-3\)]\)]]:
+RedshiftEvolving is a function which takes in gamma-ray injected spectra from a population of evolving sources, 
+that is, sources whose intrinsic spectra are not identical, but instead evolve with redshift as \!\(\*FractionBox[\(dN\), \(dE\)]\)(E,z) [GeV \!\(\*SuperscriptBox[\(s\), \(-1\)]\)], 
+which follow a given comoving density distribution in redshift, \[Rho](z) = \!\(\*FractionBox[SubscriptBox[\(dN\), \(sources\)], SubscriptBox[\(dV\), \(com\)]]\)(z) [\!\(\*SuperscriptBox[\(cm\), \(-3\)]\)], up to a redshift of \!\(\*SubscriptBox[\(z\), \(max\)]\), 
+and produces the corresponding redshifted (attenuated + cascaded) isotropic gamma-ray flux at the Earth, 
+\[CapitalPhi](E) [\!\(\*SuperscriptBox[\(GeV\), \(-1\)]\) \!\(\*SuperscriptBox[\(s\), \(-1\)]\) \!\(\*SuperscriptBox[\(cm\), \(-2\)]\) \!\(\*SuperscriptBox[\(sr\), \(-1\)]\)], after electromagnetic cascades have taken place.
+It only takes into account cosmological redshifing effects during propagation.
+The injected spectrum should be formatted as a 2D array of values \!\(\*FractionBox[\(dN\), \(dE\)]\)(E,z) [GeV \!\(\*SuperscriptBox[\(s\), \(-1\)]\)] evaluated at the redshifts given by the diffuseDistances array and at the energies given by energies array.
+The density distribution should be formatted as an array of values \[Rho](z) [\!\(\*SuperscriptBox[\(cm\), \(-3\)]\)] evaluated at the redshifts given by the diffuseDistances array.
+Distributions with \!\(\*SubscriptBox[\(z\), \(max\)]\) < 10 are not supported by \[Gamma]-Cascade.";
+
+AttenuateEvolving::usage = "AttenuateEvolving[injected spectrum \!\(\*FractionBox[\(dN\), \(dE\)]\)(E,z) [\!\(\*SuperscriptBox[\(GeV\), \(-1\)]\) \!\(\*SuperscriptBox[\(s\), \(-1\)]\)], maximum source redshift \!\(\*SubscriptBox[\(z\), \(max\)]\), redshift distribution (density per comobing volume) of sources \[Rho](z) [\!\(\*SuperscriptBox[\(cm\), \(-3\)]\)]]:
+CascadeEvolving is a function which takes in gamma-ray injected spectra from a population of evolving sources, 
+that is, sources whose intrinsic spectra are not identical, but instead evolve with redshift as \!\(\*FractionBox[\(dN\), \(dE\)]\)(E,z) [GeV \!\(\*SuperscriptBox[\(s\), \(-1\)]\)], 
+which follow a given comoving density distribution in redshift, \[Rho](z) = \!\(\*FractionBox[SubscriptBox[\(dN\), \(sources\)], SubscriptBox[\(dV\), \(com\)]]\)(z) [\!\(\*SuperscriptBox[\(cm\), \(-3\)]\)], up to a redshift of \!\(\*SubscriptBox[\(z\), \(max\)]\), 
+and produces the corresponding attenuated isotropic gamma-ray flux at the Earth, 
+\[CapitalPhi](E) [\!\(\*SuperscriptBox[\(GeV\), \(-1\)]\) \!\(\*SuperscriptBox[\(s\), \(-1\)]\) \!\(\*SuperscriptBox[\(cm\), \(-2\)]\) \!\(\*SuperscriptBox[\(sr\), \(-1\)]\)], after electromagnetic cascades have taken place.
+It takes into account cosmological redshifing effects and atteunuation of gamma rays due to pair production with the CMB/EBL.
+The injected spectrum should be formatted as a 2D array of values \!\(\*FractionBox[\(dN\), \(dE\)]\)(E,z) [GeV \!\(\*SuperscriptBox[\(s\), \(-1\)]\)] evaluated at the redshifts given by the diffuseDistances array and at the energies given by energies array.
+The density distribution should be formatted as an array of values \[Rho](z) [\!\(\*SuperscriptBox[\(cm\), \(-3\)]\)] evaluated at the redshifts given by the diffuseDistances array.
+Distributions with \!\(\*SubscriptBox[\(z\), \(max\)]\) < 10 are not supported by \[Gamma]-Cascade.";
+
 CascadeEvolving::usage = "CascadeEvolving[injected spectrum \!\(\*FractionBox[\(dN\), \(dE\)]\)(E,z) [\!\(\*SuperscriptBox[\(GeV\), \(-1\)]\) \!\(\*SuperscriptBox[\(s\), \(-1\)]\)], maximum source redshift \!\(\*SubscriptBox[\(z\), \(max\)]\), redshift distribution (density per comobing volume) of sources \[Rho](z) [\!\(\*SuperscriptBox[\(cm\), \(-3\)]\)]]:
 CascadeEvolving is a function which takes in gamma-ray injected spectra from a population of evolving sources, 
 that is, sources whose intrinsic spectra are not identical, but instead evolve with redshift as \!\(\*FractionBox[\(dN\), \(dE\)]\)(E,z) [GeV \!\(\*SuperscriptBox[\(s\), \(-1\)]\)], 
@@ -121,9 +143,16 @@ energies = logspace[-1,12,300](*[GeV]*);
 dEnergiesGamma = Differences[energies]/2;
 
 (*Function to generate bare plots of E^2dN/dE*)
-specPlot[spec_]:=Module[{logSpec=Log10@(energies^2 spec),specInt},
-specInt=Interpolation[Thread[{Log10@energies,logSpec}]];
-Return[LogLogPlot[10.0^specInt[Log10[x]],{x,0.1,10^12}]];
+specPlot[spec_]:=Module[{logSpec=Log10@(energies^2 spec),specInt,frameStyle={Black,Black,Black,Black},
+labelStyle=Directive[Black,FontFamily->"Times New Roman",FontSize-> 12],aspectRatio=3/4},
+specInt=Interpolation[Thread[{Log10@energies,logSpec}],InterpolationOrder->1];
+Return[LogLogPlot[10.0^specInt[Log10[x]],{x,0.1,10^12},
+Axes->False,
+Frame->True,
+FrameStyle-> frameStyle,
+FrameLabel->{{"\!\(\*SuperscriptBox[SubscriptBox[\(E\), \(\[Gamma]\)], \(2\)]\)\!\(\*SubscriptBox[\(\[Phi]\), \(\[Gamma]\)]\) [GeV \!\(\*SuperscriptBox[\(cm\), \(-2\)]\) s\!\(\*SuperscriptBox[\(\\\ \), \(-1\)]\) (\!\(\*SuperscriptBox[\(sr\), \(-1\)]\))]",None},{"\!\(\*SubscriptBox[\(E\), \(\[Gamma]\)]\) [GeV]",None}},
+LabelStyle-> labelStyle,
+AspectRatio->aspectRatio]];
 ];
 
 (*Function that evaluates a broken power law for a given energy, spectral index, cutoff, and normalization*)
@@ -134,7 +163,9 @@ cutoffPowerLaw[enerGamma_,gamma_,cutoff_,amp_] := (amp*enerGamma^-gamma)*Exp[-en
 (*Initialization: directories & arrays*)
 
 packageName="GCascadeV4";
-libraryLocation = FileNameJoin[{NotebookDirectory[],"LibrariesV4"}];
+packageDir=DirectoryName@$InputFileName;
+Print["Package located at ",packageDir];
+libraryLocation = FileNameJoin[{packageDir,"LibrariesV4"}];
 
 (*Default EBL model is Saldana-Lopez 2021*)
 EBLindex=1;
@@ -257,10 +288,10 @@ RedshiftingCycle[injSpectra_,zArrayLocal_]:=Block[
  strechedResult,
  stretchedEnergies = energies*((1. + zArrayLocal[[1]])/(1. + zArrayLocal[[-1]]))
  },
-
+ 
 (*Interpolation and redshifting*)
-logfunc = ReplaceAll[Log10[injSpectra],{Indeterminate -> -200.}];
-func = Interpolation[Thread[{energies, logfunc}]];
+logfunc = ReplaceAll[Log10[N[injSpectra]],{Indeterminate -> -200.}];
+func = Interpolation[Thread[{energies, logfunc}],InterpolationOrder->1];
 strechedResult = Append[Table[func[stretchedEnergies[[i]]],{i,1,Length[stretchedEnergies]-1}],func[energies[[-1]]]];(*careful: no redshifting of last energy bin*)
 funcfix = Table[If[x>=-199.,10^x,0.],{x,strechedResult}];
 
@@ -289,9 +320,9 @@ paramsLocal=Table[{zRegIndexArrayLocal[[i]],stepSizeArrayLocal[[i]]},{i,1,Length
 finalResultLocal = Fold[singleCycle[#1,#2[[1]],#2[[2]]]&, injSpectra, paramsLocal];
 
 (*Interpolation and redshifting*)
-logfunc = ReplaceAll[Log10[finalResultLocal],{Indeterminate -> -200.}];
-func = Interpolation[Thread[{energies, logfunc}]];
-strechedResult = Append[Table[func[stretchedEnergies[[i]]],{i,1,Length[stretchedEnergies]-1}],func[energies[[-1]]]];
+logfunc = ReplaceAll[Log10[N[finalResultLocal]],{Indeterminate -> -200.}];
+func = Interpolation[Thread[{energies, logfunc}],InterpolationOrder->1];
+strechedResult = Append[Table[func[stretchedEnergies[[i]]],{i,1,Length[stretchedEnergies]-1}],func[energies[[-1]]]];(*careful: no redshifting of last energy bin*)
 funcfix = Table[If[x>=-199.,10^x,0.],{x,strechedResult}];
 
 Return[funcfix];
@@ -321,9 +352,9 @@ paramsLocal=Table[{zRegIndexArrayLocal[[i]],stepSizeArrayLocal[[i]]},{i,1,Length
 finalResultLocal = Fold[singleCycle[#1,#2[[1]],#2[[2]]]&, injSpectra, paramsLocal];
 
 (*Interpolation and redshifting*)
-logfunc = ReplaceAll[Log10[finalResultLocal],{Indeterminate -> -200.}];
-func = Interpolation[Thread[{energies, logfunc}]];
-strechedResult = Append[Table[func[stretchedEnergies[[i]]],{i,1,Length[stretchedEnergies]-1}],func[energies[[-1]]]];
+logfunc = ReplaceAll[Log10[N[finalResultLocal]],{Indeterminate -> -200.}];
+func = Interpolation[Thread[{energies, logfunc}],InterpolationOrder->1];
+strechedResult = Append[Table[func[stretchedEnergies[[i]]],{i,1,Length[stretchedEnergies]-1}],func[energies[[-1]]]];(*careful: no redshifting of last energy bin*)
 funcfix = Table[If[x>=-199.,10^x,0.],{x,strechedResult}];
 
 Return[funcfix];
@@ -538,6 +569,90 @@ zArray= Prepend[zArray,Range[diffuseDistances[[1]], 0.0,-stepSize]];
 params = Table[{volumeNorms[[i]],zArray[[i]],stepSizeArray[[i]],zRegIndexArray[[i]]},{i,1,Length[volumeNorms]}];
 
 finalResult=Fold[CascadeCycle[#1+(#2[[1]]*injSpectra),#2[[2]],#2[[3]],#2[[4]]]&,Table[0,{i,1,Length[injSpectra]}],Reverse[params]]/(4*\[Pi])(*[GeV^-1 s^-1 cm^-2 sr^-1]*);
+
+Return[finalResult];
+Clear["zFunc$*",
+"finalResult$*",
+"volumeNorms$*",
+"params$*",
+"zArray$*",
+"zMaxIndex$*"
+];
+];
+
+
+RedshiftEvolving[injSpectra_(*[GeV^-1 s^-1]*),zStart_,zDistrib_(*[cm^-3]*)]:=Block[
+{zArray,
+ finalResult,
+ zFunc,
+ volumeNorms,
+ params,
+ zMaxIndex=diffuseDistancesIndex[zStart],
+ stepSize=1.*10^-6
+ },
+
+If[ToString[Head[injSpectra]]==ToString[List]&&Dimensions[injSpectra]=={Length[diffuseDistances],Length[energies]},Print["Injected spectrum properly formatted."],Print["Injected spectrum is not formatted correctly. Please use an array of dimensions "<>ToString[Length[diffuseDistances]]<>" \[Times] "<>ToString[Length[energies]]<>" containing values of dN/dE [\!\(\*SuperscriptBox[\(GeV\), \(-1\)]\) \!\(\*SuperscriptBox[\(s\), \(-1\)]\)] for your sources for each redshift in the ``diffuseDistances'' array and each energy in the ``energies'' array."];Abort[];];
+If[zStart>10,Print["Error: \[Gamma]-Cascade does not allow sources with redshift above z=10."];Abort[];];
+If[ToString[Head[zDistrib]]==ToString[List]&&Dimensions[zDistrib]==Dimensions[diffuseDistances],Print["Comoving density distribution properly formatted."];,Print["Comoving density distribution is not formatted correctly. Please use a list of length "<>ToString[Length[diffuseDistances]]<>" containing values of \[Rho](z) for each redshhift in the ``diffuseDistances'' array."];Abort[];];
+
+(*Interpolates \[Rho](z) given by the user as zDistrib*)
+zFunc:=Interpolation[Thread[{diffuseDistances,zDistrib}],InterpolationOrder->1];
+
+(*Calculates \[Rho](z)Subscript[dV, c](z)/4\[Pi]Subscript[d, c](z) = \[Rho](z)dz/H(z), which is the redshift integrand (without the redshift-dependent dN/dE)*)
+volumeNorms=Table[((c*Mpc*zFunc[diffuseDistances[[i]]])* diffuseSteps[[i]])/hubble[diffuseDistances[[i]]],{i,1,zMaxIndex}];
+
+(*Calculates an array of list where every member is a list of z-values which are the step limits for the next function*)
+zArray= Table[Range[diffuseDistances[[i+1]], diffuseDistances[[i]],-stepSize],{i,1,Length[volumeNorms]-1}];
+zArray= Prepend[zArray,Range[diffuseDistances[[1]], 0.0,-stepSize]];
+
+(*Creates a list of parameters to pass on to the next function*)
+params = Table[{volumeNorms[[i]]*injSpectra[[i]],zArray[[i]]},{i,1,Length[volumeNorms]}];
+
+finalResult=Fold[RedshiftingCycle[#1+#2[[1]],#2[[2]]]&,Table[0,{i,1,Length[energies]}],Reverse[params]]/(4*\[Pi])(*[GeV^-1 s^-1 cm^-2 sr^-1]*);
+
+
+
+Return[finalResult];
+Clear["zFunc$*",
+"finalResult$*",
+"volumeNorms$*",
+"params$*",
+"zArray$*",
+"zMaxIndex$*"
+];
+];
+
+
+AttenuateEvolving[injSpectra_(*[GeV^-1 s^-1]*),zStart_,zDistrib_(*[cm^-3]*)]:=Block[
+{zArray,
+ finalResult,
+ zFunc,
+ volumeNorms,
+ params,
+ zMaxIndex=diffuseDistancesIndex[zStart],
+ stepSize=1.*10^-6
+ },
+
+If[ToString[Head[injSpectra]]==ToString[List]&&Dimensions[injSpectra]=={Length[diffuseDistances],Length[energies]},Print["Injected spectrum properly formatted."],Print["Injected spectrum is not formatted correctly. Please use an array of dimensions "<>ToString[Length[diffuseDistances]]<>" \[Times] "<>ToString[Length[energies]]<>" containing values of dN/dE [\!\(\*SuperscriptBox[\(GeV\), \(-1\)]\) \!\(\*SuperscriptBox[\(s\), \(-1\)]\)] for your sources for each redshift in the ``diffuseDistances'' array and each energy in the ``energies'' array."];Abort[];];
+If[zStart>10,Print["Error: \[Gamma]-Cascade does not allow sources with redshift above z=10."];Abort[];];
+If[ToString[Head[zDistrib]]==ToString[List]&&Dimensions[zDistrib]==Dimensions[diffuseDistances],Print["Comoving density distribution properly formatted."];,Print["Comoving density distribution is not formatted correctly. Please use a list of length "<>ToString[Length[diffuseDistances]]<>" containing values of \[Rho](z) for each redshhift in the ``diffuseDistances'' array."];Abort[];];
+
+(*Interpolates \[Rho](z) given by the user as zDistrib*)
+zFunc:=Interpolation[Thread[{diffuseDistances,zDistrib}],InterpolationOrder->1];
+
+(*Calculates \[Rho](z)Subscript[dV, c](z)/4\[Pi]Subscript[d, c](z) = \[Rho](z)dz/H(z), which is the redshift integrand (without the redshift-dependent dN/dE)*)
+volumeNorms=Table[((c*Mpc*zFunc[diffuseDistances[[i]]])* diffuseSteps[[i]])/hubble[diffuseDistances[[i]]],{i,1,zMaxIndex}];
+
+(*Calculates an array of list where every member is a list of z-values which are the step limits for the next function*)
+zArray= Table[Range[diffuseDistances[[i+1]], diffuseDistances[[i]],-stepSize],{i,1,Length[volumeNorms]-1}];
+zArray= Prepend[zArray,Range[diffuseDistances[[1]], 0.0,-stepSize]];
+
+(*Creates a list of parameters to pass on to the next function*)
+params = Table[{volumeNorms[[i]]*injSpectra[[i]],zArray[[i]],stepSizeArray[[i]],zRegIndexArray[[i]]},{i,1,Length[volumeNorms]}];
+
+finalResult=Fold[AttenuationCycle[#1+#2[[1]],#2[[2]],#2[[3]],#2[[4]]]&,Table[0,{i,1,Length[energies]}],Reverse[params]]/(4*\[Pi])(*[GeV^-1 s^-1 cm^-2 sr^-1]*);
+
+
 
 Return[finalResult];
 Clear["zFunc$*",
