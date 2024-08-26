@@ -145,7 +145,7 @@ dEnergiesGamma = Differences[energies]/2;
 (*Function to generate bare plots of E^2dN/dE*)
 specPlot[spec_]:=Module[{logSpec=Log10@(energies^2 spec),specInt,frameStyle={Black,Black,Black,Black},
 labelStyle=Directive[Black,FontFamily->"Times New Roman",FontSize-> 12],aspectRatio=3/4},
-specInt=Interpolation[Thread[{Log10@energies,logSpec}]];
+specInt=Interpolation[Thread[{Log10@energies,logSpec}],InterpolationOrder->1];
 Return[LogLogPlot[10.0^specInt[Log10[x]],{x,0.1,10^12},
 Axes->False,
 Frame->True,
@@ -288,10 +288,10 @@ RedshiftingCycle[injSpectra_,zArrayLocal_]:=Block[
  strechedResult,
  stretchedEnergies = energies*((1. + zArrayLocal[[1]])/(1. + zArrayLocal[[-1]]))
  },
-
+ 
 (*Interpolation and redshifting*)
-logfunc = ReplaceAll[Log10[injSpectra],{Indeterminate -> -200.}];
-func = Interpolation[Thread[{energies, logfunc}]];
+logfunc = ReplaceAll[Log10[N[injSpectra]],{Indeterminate -> -200.}];
+func = Interpolation[Thread[{energies, logfunc}],InterpolationOrder->1];
 strechedResult = Append[Table[func[stretchedEnergies[[i]]],{i,1,Length[stretchedEnergies]-1}],func[energies[[-1]]]];(*careful: no redshifting of last energy bin*)
 funcfix = Table[If[x>=-199.,10^x,0.],{x,strechedResult}];
 
@@ -320,9 +320,9 @@ paramsLocal=Table[{zRegIndexArrayLocal[[i]],stepSizeArrayLocal[[i]]},{i,1,Length
 finalResultLocal = Fold[singleCycle[#1,#2[[1]],#2[[2]]]&, injSpectra, paramsLocal];
 
 (*Interpolation and redshifting*)
-logfunc = ReplaceAll[Log10[finalResultLocal],{Indeterminate -> -200.}];
-func = Interpolation[Thread[{energies, logfunc}]];
-strechedResult = Append[Table[func[stretchedEnergies[[i]]],{i,1,Length[stretchedEnergies]-1}],func[energies[[-1]]]];
+logfunc = ReplaceAll[Log10[N[finalResultLocal]],{Indeterminate -> -200.}];
+func = Interpolation[Thread[{energies, logfunc}],InterpolationOrder->1];
+strechedResult = Append[Table[func[stretchedEnergies[[i]]],{i,1,Length[stretchedEnergies]-1}],func[energies[[-1]]]];(*careful: no redshifting of last energy bin*)
 funcfix = Table[If[x>=-199.,10^x,0.],{x,strechedResult}];
 
 Return[funcfix];
@@ -352,9 +352,9 @@ paramsLocal=Table[{zRegIndexArrayLocal[[i]],stepSizeArrayLocal[[i]]},{i,1,Length
 finalResultLocal = Fold[singleCycle[#1,#2[[1]],#2[[2]]]&, injSpectra, paramsLocal];
 
 (*Interpolation and redshifting*)
-logfunc = ReplaceAll[Log10[finalResultLocal],{Indeterminate -> -200.}];
-func = Interpolation[Thread[{energies, logfunc}]];
-strechedResult = Append[Table[func[stretchedEnergies[[i]]],{i,1,Length[stretchedEnergies]-1}],func[energies[[-1]]]];
+logfunc = ReplaceAll[Log10[N[finalResultLocal]],{Indeterminate -> -200.}];
+func = Interpolation[Thread[{energies, logfunc}],InterpolationOrder->1];
+strechedResult = Append[Table[func[stretchedEnergies[[i]]],{i,1,Length[stretchedEnergies]-1}],func[energies[[-1]]]];(*careful: no redshifting of last energy bin*)
 funcfix = Table[If[x>=-199.,10^x,0.],{x,strechedResult}];
 
 Return[funcfix];
