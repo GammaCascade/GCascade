@@ -34,6 +34,10 @@ Unzip the LibrariesV4.zip directory into the /GCascade directory. The structure 
 ### Step 4
 Open the Tutorial.nb notebook in Mathematica to learn basic usage.
 
+# V4.1
+
+As of May 15, 2025 $\gamma$-Cascade V4 has been updated to be compatible with Mathematica versions 12.2 and earlier. We have also added to the tutorial notebook a section on how to use $\gamma$-Cascade for obtaining gamma-ray fluxes from cosmological dark matter decay/annihilation.
+
 # V4
 
 As of August 6, 2024 a new version of $\gamma$-Cascade is available, GCascadeV4. V4 implements an assortment of the most widely used EBL models, significantly improves computational precision, and provides new core functionality. Additionally, there is a new method to estimate the uncertainty due to the EBL model. New Libraries have also been created and uploaded to zenodo under the DOI:[10.5281/zenodo.13154970](https://doi.org/10.5281/zenodo.13154970). 
