@@ -180,6 +180,7 @@ extinctionCoeffs=Table[Exp[-Mpc*IMFP[[j,i]]],{j,1,Length[zReg]},{i,1,Length[ener
 
 (*Photon spectrum after one PP + on-the-spot ICS cycle [GeV^-1]*)
 cycleSpec=Import[FileNameJoin[{libraryLocation,"cycle-spec","cyclespecSL.mat"}]][[1]]*10^9;
+If[$VersionNumber<12.2,cycleSpec=Transpose[cycleSpec,{3,1,2}]];
 
 
 
@@ -211,7 +212,7 @@ fICS,
 EBLname,
 ppspec,
 OTSspec,
-cyclespec=Table[0.,Length[zReg],Length[energies],Length[energies]],
+cycleSpec=Table[0.,Length[zReg],Length[energies],Length[energies]],
 changelog
 },
 
@@ -233,14 +234,17 @@ Print["The name of the previous table containing PP-ICS cycle spectra for the ch
 
 (*Importing PP and on-the-spot ICS spectral tables (multiplied by Subscript[f, ICS])*)
 ppspec=Import[FileNameJoin[{libraryLocation,"pp-spec","normalizedPPspec"<>EBLname<>".mat"}]][[1]];
+If[$VersionNumber<12.2,ppspec=Transpose[ppspec,{3,1,2}]];
 OTSspec=Import[FileNameJoin[{libraryLocation,"on-the-spot-ics-spec","onthespotICSspec"<>EBLname<>".mat"}]][[1]]*fICS;
+If[$VersionNumber<12.2,OTSspec=Transpose[OTSspec,{3,1,2}]];
 
 (*Calculating and exporting new PP-ICS cycle spectral table*)
-For[i=1,i<=Length[zReg],i++,For[j=1,j<=Length[energies],j++,cyclespec[[i,j]]=10^9*Total[dEnergiesGamma*(ppspec[[i,j,;;-2]]*OTSspec[[i,;;-2]]+ppspec[[i,j,2;;]]*OTSspec[[i,2;;]])]]];
-Export[FileNameJoin[{libraryLocation,"cycle-spec","cyclespec"<>EBLname<>".mat"}],cyclespec];
+For[i=1,i<=Length[zReg],i++,For[j=1,j<=Length[energies],j++,cycleSpec[[i,j]]=10^9*Total[dEnergiesGamma*(ppspec[[i,j,;;-2]]*OTSspec[[i,;;-2]]+ppspec[[i,j,2;;]]*OTSspec[[i,2;;]])]]];
+If[$VersionNumber<12.2,cycleSpec=Transpose[cycleSpec,{2,3,1}]];
+Export[FileNameJoin[{libraryLocation,"cycle-spec","cyclespec"<>EBLname<>".mat"}],cycleSpec];
 
 (*Changing magnetic field (and EBL model, if not the current one) in the active kernel*)
-If[EBL==EBLindex,cycleSpec=Import[FileNameJoin[{libraryLocation,"cycle-spec","cyclespec"<>EBLname<>".mat"}]][[1]]*10^9,changeEBLModel[EBL]];
+If[EBL==EBLindex,cycleSpec=Import[FileNameJoin[{libraryLocation,"cycle-spec","cyclespec"<>EBLname<>".mat"}]][[1]]*10^9;If[$VersionNumber<12.2,cycleSpec=Transpose[cycleSpec,{3,1,2}]];,changeEBLModel[EBL]];
 
 (*Updating magnetic field change log*)
 changelog=Import[FileNameJoin[{libraryLocation,"BfieldChangelog.txt"}],"List"];
@@ -274,6 +278,7 @@ EBLindex=EBL;
 If[EBL==0,IMFP=IMFPcmb,IMFPebl=Import[FileNameJoin[{libraryLocation,"pp-IMFPs","IMFPebl"<>EBLname<>".csv"}],"Table"];IMFP=IMFPcmb+IMFPebl;];
 extinctionCoeffs=Table[Exp[-Mpc*IMFP[[j,i]]],{j,1,Length[zReg]},{i,1,Length[energies]}]//Quiet;
 cycleSpec=Import[FileNameJoin[{libraryLocation,"cycle-spec","cyclespec"<>EBLname<>".mat"}]][[1]]*10^9;
+If[$VersionNumber<12.2,cycleSpec=Transpose[cycleSpec,{3,1,2}]];
 
 Print["EBL model changed from "<>oldEBL<>" to "<>newEBL<>"."];
 
@@ -473,7 +478,7 @@ RedshiftDiffuse[injSpectra_(*[GeV^-1 s^-1]*),zStart_,zDistrib_(*[cm^-3]*)]:=Bloc
  
 If[ToString[Head[injSpectra]]==ToString[List]&&Dimensions[injSpectra]==Dimensions[energies],Print["Injected spectrum properly formatted."],Print["Injected spectrum is not formatted correctly. Please use a list of length "<>ToString[Length[energies]]<>" containing values of dN/dE [\!\(\*SuperscriptBox[\(GeV\), \(-1\)]\) \!\(\*SuperscriptBox[\(s\), \(-1\)]\)] for your sources for each energy in the ``energies'' array."];Abort[];];
 If[zStart>10,Print["Error: \[Gamma]-Cascade does not allow sources with redshift above z=10."];Abort[];];
-If[ToString[Head[zDistrib]]==ToString[List]&&Dimensions[zDistrib]==Dimensions[diffuseDistances],Print["Comoving density distribution properly formatted."];,Print["Comoving density distribution is not formatted correctly. Please use a list of length "<>ToString[Length[diffuseDistances]]<>" containing values of \[Rho](z) for each redshhift in the ``diffuseDistances'' array."];Abort[];];
+If[ToString[Head[zDistrib]]==ToString[List]&&Dimensions[zDistrib]==Dimensions[diffuseDistances],Print["Comoving density distribution properly formatted."];,Print["Comoving density distribution is not formatted correctly. Please use a list of length "<>ToString[Length[diffuseDistances]]<>" containing values of \[Rho](z) for each redshift in the ``diffuseDistances'' array."];Abort[];];
 
 (*Interpolates \[Rho](z) [cm^-3] given by the user as zDistrib*)
 zFunc:=Interpolation[Thread[{diffuseDistances,zDistrib}],InterpolationOrder->1];
@@ -513,7 +518,7 @@ AttenuateDiffuse[injSpectra_(*[GeV^-1 s^-1]*),zStart_,zDistrib_(*[cm^-3]*)]:=Blo
  
 If[ToString[Head[injSpectra]]==ToString[List]&&Dimensions[injSpectra]==Dimensions[energies],Print["Injected spectrum properly formatted."],Print["Injected spectrum is not formatted correctly. Please use a list of length "<>ToString[Length[energies]]<>" containing values of dN/dE [\!\(\*SuperscriptBox[\(GeV\), \(-1\)]\) \!\(\*SuperscriptBox[\(s\), \(-1\)]\)] for your sources for each energy in the ``energies'' array."];Abort[];];
 If[zStart>10,Print["Error: \[Gamma]-Cascade does not allow sources with redshift above z=10."];Abort[];];
-If[ToString[Head[zDistrib]]==ToString[List]&&Dimensions[zDistrib]==Dimensions[diffuseDistances],Print["Comoving density distribution properly formatted."];,Print["Comoving density distribution is not formatted correctly. Please use a list of length "<>ToString[Length[diffuseDistances]]<>" containing values of \[Rho](z) for each redshhift in the ``diffuseDistances'' array."];Abort[];];
+If[ToString[Head[zDistrib]]==ToString[List]&&Dimensions[zDistrib]==Dimensions[diffuseDistances],Print["Comoving density distribution properly formatted."];,Print["Comoving density distribution is not formatted correctly. Please use a list of length "<>ToString[Length[diffuseDistances]]<>" containing values of \[Rho](z) for each redshift in the ``diffuseDistances'' array."];Abort[];];
 
 (*Interpolates \[Rho](z) [cm^-3] given by the user as zDistrib*)
 zFunc:=Interpolation[Thread[{diffuseDistances,zDistrib}],InterpolationOrder->1];
@@ -553,7 +558,7 @@ CascadeDiffuse[injSpectra_(*[GeV^-1 s^-1]*),zStart_,zDistrib_(*[cm^-3]*)]:=Block
  
 If[ToString[Head[injSpectra]]==ToString[List]&&Dimensions[injSpectra]==Dimensions[energies],Print["Injected spectrum properly formatted."],Print["Injected spectrum is not formatted correctly. Please use a list of length "<>ToString[Length[energies]]<>" containing values of dN/dE [\!\(\*SuperscriptBox[\(GeV\), \(-1\)]\) \!\(\*SuperscriptBox[\(s\), \(-1\)]\)] for your sources for each energy in the ``energies'' array."];Abort[];];
 If[zStart>10,Print["Error: \[Gamma]-Cascade does not allow sources with redshift above z=10."];Abort[];];
-If[ToString[Head[zDistrib]]==ToString[List]&&Dimensions[zDistrib]==Dimensions[diffuseDistances],Print["Comoving density distribution properly formatted."];,Print["Comoving density distribution is not formatted correctly. Please use a list of length "<>ToString[Length[diffuseDistances]]<>" containing values of \[Rho](z) for each redshhift in the ``diffuseDistances'' array."];Abort[];];
+If[ToString[Head[zDistrib]]==ToString[List]&&Dimensions[zDistrib]==Dimensions[diffuseDistances],Print["Comoving density distribution properly formatted."];,Print["Comoving density distribution is not formatted correctly. Please use a list of length "<>ToString[Length[diffuseDistances]]<>" containing values of \[Rho](z) for each redshift in the ``diffuseDistances'' array."];Abort[];];
 
 (*Interpolates \[Rho](z) [cm^-3] given by the user as zDistrib*)
 zFunc:=Interpolation[Thread[{diffuseDistances,zDistrib}],InterpolationOrder->1];
@@ -593,7 +598,7 @@ RedshiftEvolving[injSpectra_(*[GeV^-1 s^-1]*),zStart_,zDistrib_(*[cm^-3]*)]:=Blo
 
 If[ToString[Head[injSpectra]]==ToString[List]&&Dimensions[injSpectra]=={Length[diffuseDistances],Length[energies]},Print["Injected spectrum properly formatted."],Print["Injected spectrum is not formatted correctly. Please use an array of dimensions "<>ToString[Length[diffuseDistances]]<>" \[Times] "<>ToString[Length[energies]]<>" containing values of dN/dE [\!\(\*SuperscriptBox[\(GeV\), \(-1\)]\) \!\(\*SuperscriptBox[\(s\), \(-1\)]\)] for your sources for each redshift in the ``diffuseDistances'' array and each energy in the ``energies'' array."];Abort[];];
 If[zStart>10,Print["Error: \[Gamma]-Cascade does not allow sources with redshift above z=10."];Abort[];];
-If[ToString[Head[zDistrib]]==ToString[List]&&Dimensions[zDistrib]==Dimensions[diffuseDistances],Print["Comoving density distribution properly formatted."];,Print["Comoving density distribution is not formatted correctly. Please use a list of length "<>ToString[Length[diffuseDistances]]<>" containing values of \[Rho](z) for each redshhift in the ``diffuseDistances'' array."];Abort[];];
+If[ToString[Head[zDistrib]]==ToString[List]&&Dimensions[zDistrib]==Dimensions[diffuseDistances],Print["Comoving density distribution properly formatted."];,Print["Comoving density distribution is not formatted correctly. Please use a list of length "<>ToString[Length[diffuseDistances]]<>" containing values of \[Rho](z) for each redshift in the ``diffuseDistances'' array."];Abort[];];
 
 (*Interpolates \[Rho](z) given by the user as zDistrib*)
 zFunc:=Interpolation[Thread[{diffuseDistances,zDistrib}],InterpolationOrder->1];
@@ -635,7 +640,7 @@ AttenuateEvolving[injSpectra_(*[GeV^-1 s^-1]*),zStart_,zDistrib_(*[cm^-3]*)]:=Bl
 
 If[ToString[Head[injSpectra]]==ToString[List]&&Dimensions[injSpectra]=={Length[diffuseDistances],Length[energies]},Print["Injected spectrum properly formatted."],Print["Injected spectrum is not formatted correctly. Please use an array of dimensions "<>ToString[Length[diffuseDistances]]<>" \[Times] "<>ToString[Length[energies]]<>" containing values of dN/dE [\!\(\*SuperscriptBox[\(GeV\), \(-1\)]\) \!\(\*SuperscriptBox[\(s\), \(-1\)]\)] for your sources for each redshift in the ``diffuseDistances'' array and each energy in the ``energies'' array."];Abort[];];
 If[zStart>10,Print["Error: \[Gamma]-Cascade does not allow sources with redshift above z=10."];Abort[];];
-If[ToString[Head[zDistrib]]==ToString[List]&&Dimensions[zDistrib]==Dimensions[diffuseDistances],Print["Comoving density distribution properly formatted."];,Print["Comoving density distribution is not formatted correctly. Please use a list of length "<>ToString[Length[diffuseDistances]]<>" containing values of \[Rho](z) for each redshhift in the ``diffuseDistances'' array."];Abort[];];
+If[ToString[Head[zDistrib]]==ToString[List]&&Dimensions[zDistrib]==Dimensions[diffuseDistances],Print["Comoving density distribution properly formatted."];,Print["Comoving density distribution is not formatted correctly. Please use a list of length "<>ToString[Length[diffuseDistances]]<>" containing values of \[Rho](z) for each redshift in the ``diffuseDistances'' array."];Abort[];];
 
 (*Interpolates \[Rho](z) given by the user as zDistrib*)
 zFunc:=Interpolation[Thread[{diffuseDistances,zDistrib}],InterpolationOrder->1];
@@ -677,7 +682,7 @@ CascadeEvolving[injSpectra_(*[GeV^-1 s^-1]*),zStart_,zDistrib_(*[cm^-3]*)]:=Bloc
 
 If[ToString[Head[injSpectra]]==ToString[List]&&Dimensions[injSpectra]=={Length[diffuseDistances],Length[energies]},Print["Injected spectrum properly formatted."],Print["Injected spectrum is not formatted correctly. Please use an array of dimensions "<>ToString[Length[diffuseDistances]]<>" \[Times] "<>ToString[Length[energies]]<>" containing values of dN/dE [\!\(\*SuperscriptBox[\(GeV\), \(-1\)]\) \!\(\*SuperscriptBox[\(s\), \(-1\)]\)] for your sources for each redshift in the ``diffuseDistances'' array and each energy in the ``energies'' array."];Abort[];];
 If[zStart>10,Print["Error: \[Gamma]-Cascade does not allow sources with redshift above z=10."];Abort[];];
-If[ToString[Head[zDistrib]]==ToString[List]&&Dimensions[zDistrib]==Dimensions[diffuseDistances],Print["Comoving density distribution properly formatted."];,Print["Comoving density distribution is not formatted correctly. Please use a list of length "<>ToString[Length[diffuseDistances]]<>" containing values of \[Rho](z) for each redshhift in the ``diffuseDistances'' array."];Abort[];];
+If[ToString[Head[zDistrib]]==ToString[List]&&Dimensions[zDistrib]==Dimensions[diffuseDistances],Print["Comoving density distribution properly formatted."];,Print["Comoving density distribution is not formatted correctly. Please use a list of length "<>ToString[Length[diffuseDistances]]<>" containing values of \[Rho](z) for each redshift in the ``diffuseDistances'' array."];Abort[];];
 
 (*Interpolates \[Rho](z) given by the user as zDistrib*)
 zFunc:=Interpolation[Thread[{diffuseDistances,zDistrib}],InterpolationOrder->1];
