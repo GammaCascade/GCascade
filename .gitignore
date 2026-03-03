@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+.pytest_cache/
+.mypy_cache/
+.DS_Store
+
+# Large/generated scientific tables and benchmark artifacts
+generated_libraries/
+benchmarks/v4_reference/**/actual.csv
+benchmarks/v4_reference/**/diff.csv
