@@ -5,6 +5,7 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .DS_Store
+.ipynb_checkpoints/
 
 # Large/generated scientific tables and benchmark artifacts
 generated_libraries/
