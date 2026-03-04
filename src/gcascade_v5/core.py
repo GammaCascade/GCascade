@@ -5,7 +5,6 @@ from datetime import datetime
 from pathlib import Path
 import os
 import time
-from typing import Callable
 
 import numpy as np
 from scipy.integrate import quad
@@ -21,11 +20,6 @@ elecmass = 0.51099895e6  # eV
 echarge = 1.602176634e-19  # C
 sigmaTe = 6.65245873e-29  # m^2
 
-# Cosmological parameters from Planck [arXiv:1807.06209]
-H0 = 67.4
-OmegaLambda = 0.685
-OmegaM = 0.315
-
 DEFAULT_LIBRARY_PATH = Path(
     os.getenv("GCASCADE_LIB_PATH", "/Users/antonio/Desktop/Research/GCascade/LibrariesV4")
 )
@@ -33,14 +27,12 @@ DEFAULT_GENERATED_LIBRARY_PATH = Path(
     os.getenv("GCASCADE_GENERATED_LIB_PATH", "generated_libraries")
 )
 
-
-def logspace(a: float, b: float, n: int) -> np.ndarray:
-    """Generate n logarithmically spaced values from 10^a to 10^b."""
-    return np.power(10.0, np.linspace(a, b, n, dtype=np.float64))
-
-
 def hubble(z: float | np.ndarray) -> float | np.ndarray:
     """Hubble rate in (km/s)/Mpc."""
+    # Cosmological parameters from Planck [arXiv:1807.06209]
+    H0 = 67.4
+    OmegaLambda = 0.685
+    OmegaM = 0.315
     z_arr = np.asarray(z, dtype=np.float64)
     out = H0 * np.sqrt(OmegaLambda + OmegaM * np.power(1.0 + z_arr, 3.0))
     if np.isscalar(z):
@@ -63,7 +55,7 @@ diffuseDistances = np.cumsum(diffuseSteps)
 a = np.arange(0.0, 10.0000001, 0.01, dtype=np.float64)
 zReg = np.round(a, 2)
 
-energies = logspace(-1, 12, 300)
+energies = np.logspace(-1, 12, 300, dtype=np.float64)
 dEnergiesGamma = np.diff(energies) / 2.0
 
 
@@ -823,16 +815,12 @@ __all__ = [
     "elecmass",
     "echarge",
     "sigmaTe",
-    "H0",
-    "OmegaLambda",
-    "OmegaM",
     "energies",
     "diffuseSteps",
     "diffuseDistances",
     "zReg",
     "dEnergiesGamma",
     "EBLindex",
-    "logspace",
     "hubble",
     "cutoffPowerLaw",
     "specPlot",
