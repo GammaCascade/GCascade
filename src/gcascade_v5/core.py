@@ -26,6 +26,28 @@ DEFAULT_LIBRARY_PATH = Path(
 DEFAULT_GENERATED_LIBRARY_PATH = Path(
     os.getenv("GCASCADE_GENERATED_LIB_PATH", "generated_libraries")
 )
+PROGRESS_ENABLED = os.getenv("GCASCADE_PROGRESS", "1") != "0"
+
+
+def set_progress(enabled: bool) -> None:
+    """Enable or disable runtime status/progress printing."""
+    global PROGRESS_ENABLED
+    PROGRESS_ENABLED = bool(enabled)
+
+
+def _status(message: str) -> None:
+    if PROGRESS_ENABLED:
+        print(message, flush=True)
+
+
+def _progress_marks(total: int, n_marks: int = 10) -> set[int]:
+    if total <= 0:
+        return set()
+    if total == 1:
+        return {1}
+    marks = {max(1, int(round(total * i / n_marks))) for i in range(1, n_marks + 1)}
+    marks.add(total)
+    return marks
 
 def hubble(z: float | np.ndarray) -> float | np.ndarray:
     """Hubble rate in (km/s)/Mpc."""
@@ -270,28 +292,34 @@ def _validate_z_start(z_start: float) -> float:
     return z
 
 
-def _validate_spectrum_1d(inj: np.ndarray | list[float]) -> np.ndarray:
+def _validate_spectrum_1d(inj: np.ndarray | list[float], announce: bool = True) -> np.ndarray:
     arr = np.asarray(inj, dtype=np.float64)
     if arr.shape != energies.shape:
         raise ValueError(
             f"Injected spectrum must have shape {energies.shape}, got {arr.shape}"
         )
+    if announce:
+        _status("Injected spectrum properly formatted.")
     return arr
 
 
-def _validate_spectrum_2d(inj: np.ndarray | list[list[float]]) -> np.ndarray:
+def _validate_spectrum_2d(inj: np.ndarray | list[list[float]], announce: bool = True) -> np.ndarray:
     arr = np.asarray(inj, dtype=np.float64)
     target = (len(diffuseDistances), len(energies))
     if arr.shape != target:
         raise ValueError(f"Injected evolving spectrum must have shape {target}, got {arr.shape}")
+    if announce:
+        _status("Injected spectrum properly formatted.")
     return arr
 
 
-def _validate_z_distribution(z_distrib: np.ndarray | list[float]) -> np.ndarray:
+def _validate_z_distribution(z_distrib: np.ndarray | list[float], announce: bool = True) -> np.ndarray:
     arr = np.asarray(z_distrib, dtype=np.float64)
     target = diffuseDistances.shape
     if arr.shape != target:
         raise ValueError(f"Comoving density distribution must have shape {target}, got {arr.shape}")
+    if announce:
+        _status("Comoving density distribution properly formatted.")
     return arr
 
 
@@ -405,7 +433,7 @@ def specPlot(spec: np.ndarray) -> tuple[object, object]:
     except Exception as exc:  # pragma: no cover - optional dependency at runtime
         raise RuntimeError("matplotlib is not available; install it to use specPlot") from exc
 
-    s = _validate_spectrum_1d(spec)
+    s = _validate_spectrum_1d(spec, announce=False)
     fig, ax = plt.subplots(figsize=(7, 5))
     ax.loglog(energies, energies**2 * s)
     ax.set_xlabel(r"$E_\gamma$ [GeV]")
@@ -417,6 +445,7 @@ def specPlot(spec: np.ndarray) -> tuple[object, object]:
 def RedshiftPoint(injSpectraPre: np.ndarray | list[float], zStart: float) -> np.ndarray:
     inj_spectra = _validate_spectrum_1d(injSpectraPre)
     z_start = _validate_z_start(zStart)
+    _status(f"Running RedshiftPoint for zStart={z_start:.6g}")
 
     z_max_index = diffuseDistancesIndex(z_start) + 1
     z_array = _build_z_windows(z_max_index)
@@ -426,12 +455,14 @@ def RedshiftPoint(injSpectraPre: np.ndarray | list[float], zStart: float) -> np.
         final_result = RedshiftingCycle(final_result, window)
 
     d_l = _luminosity_distance_mpc(z_start)
+    _status("RedshiftPoint completed.")
     return ((1.0 + z_start) ** 2 * final_result) / (4.0 * np.pi * (d_l * Mpc) ** 2)
 
 
 def AttenuatePoint(injSpectraPre: np.ndarray | list[float], zStart: float) -> np.ndarray:
     inj_spectra = _validate_spectrum_1d(injSpectraPre)
     z_start = _validate_z_start(zStart)
+    _status(f"Running AttenuatePoint for zStart={z_start:.6g}")
 
     s = _state()
     s.ensure_ebl_loaded()
@@ -448,16 +479,22 @@ def AttenuatePoint(injSpectraPre: np.ndarray | list[float], zStart: float) -> np
     )
 
     final_result = inj_spectra.copy()
-    for z_window, step_row, zreg_row in reversed(params):
+    total = len(params)
+    marks = _progress_marks(total)
+    for idx, (z_window, step_row, zreg_row) in enumerate(reversed(params), start=1):
         final_result = AttenuationCycle(final_result, z_window, step_row, zreg_row)
+        if idx in marks:
+            _status(f"AttenuatePoint progress: {idx}/{total}")
 
     d_l = _luminosity_distance_mpc(z_start)
+    _status("AttenuatePoint completed.")
     return ((1.0 + z_start) ** 2 * final_result) / (4.0 * np.pi * (d_l * Mpc) ** 2)
 
 
 def CascadePoint(injSpectraPre: np.ndarray | list[float], zStart: float) -> np.ndarray:
     inj_spectra = _validate_spectrum_1d(injSpectraPre)
     z_start = _validate_z_start(zStart)
+    _status(f"Running CascadePoint for zStart={z_start:.6g}")
 
     s = _state()
     s.ensure_ebl_loaded()
@@ -474,10 +511,15 @@ def CascadePoint(injSpectraPre: np.ndarray | list[float], zStart: float) -> np.n
     )
 
     final_result = inj_spectra.copy()
-    for z_window, step_row, zreg_row in reversed(params):
+    total = len(params)
+    marks = _progress_marks(total)
+    for idx, (z_window, step_row, zreg_row) in enumerate(reversed(params), start=1):
         final_result = CascadeCycle(final_result, z_window, step_row, zreg_row)
+        if idx in marks:
+            _status(f"CascadePoint progress: {idx}/{total}")
 
     d_l = _luminosity_distance_mpc(z_start)
+    _status("CascadePoint completed.")
     return ((1.0 + z_start) ** 2 * final_result) / (4.0 * np.pi * (d_l * Mpc) ** 2)
 
 
@@ -506,14 +548,20 @@ def RedshiftDiffuse(
     inj_spectra = _validate_spectrum_1d(injSpectra)
     z_start = _validate_z_start(zStart)
     z_distrib = _validate_z_distribution(zDistrib)
+    _status(f"Running RedshiftDiffuse for zStart={z_start:.6g}")
 
     volume_norms, z_array = _volume_norms(z_start, z_distrib)
     params = list(zip(volume_norms, z_array, strict=True))
 
     final_result = np.zeros_like(inj_spectra)
-    for volume_norm, z_window in reversed(params):
+    total = len(params)
+    marks = _progress_marks(total)
+    for idx, (volume_norm, z_window) in enumerate(reversed(params), start=1):
         final_result = RedshiftingCycle(final_result + volume_norm * inj_spectra, z_window)
+        if idx in marks:
+            _status(f"RedshiftDiffuse progress: {idx}/{total}")
 
+    _status("RedshiftDiffuse completed.")
     return final_result / (4.0 * np.pi)
 
 
@@ -525,6 +573,7 @@ def AttenuateDiffuse(
     inj_spectra = _validate_spectrum_1d(injSpectra)
     z_start = _validate_z_start(zStart)
     z_distrib = _validate_z_distribution(zDistrib)
+    _status(f"Running AttenuateDiffuse for zStart={z_start:.6g}")
 
     s = _state()
     s.ensure_ebl_loaded()
@@ -542,9 +591,14 @@ def AttenuateDiffuse(
     )
 
     final_result = np.zeros_like(inj_spectra)
-    for volume_norm, z_window, step_row, zreg_row in reversed(params):
+    total = len(params)
+    marks = _progress_marks(total)
+    for idx, (volume_norm, z_window, step_row, zreg_row) in enumerate(reversed(params), start=1):
         final_result = AttenuationCycle(final_result + volume_norm * inj_spectra, z_window, step_row, zreg_row)
+        if idx in marks:
+            _status(f"AttenuateDiffuse progress: {idx}/{total}")
 
+    _status("AttenuateDiffuse completed.")
     return final_result / (4.0 * np.pi)
 
 
@@ -556,6 +610,7 @@ def CascadeDiffuse(
     inj_spectra = _validate_spectrum_1d(injSpectra)
     z_start = _validate_z_start(zStart)
     z_distrib = _validate_z_distribution(zDistrib)
+    _status(f"Running CascadeDiffuse for zStart={z_start:.6g}")
 
     s = _state()
     s.ensure_ebl_loaded()
@@ -573,9 +628,14 @@ def CascadeDiffuse(
     )
 
     final_result = np.zeros_like(inj_spectra)
-    for volume_norm, z_window, step_row, zreg_row in reversed(params):
+    total = len(params)
+    marks = _progress_marks(total)
+    for idx, (volume_norm, z_window, step_row, zreg_row) in enumerate(reversed(params), start=1):
         final_result = CascadeCycle(final_result + volume_norm * inj_spectra, z_window, step_row, zreg_row)
+        if idx in marks:
+            _status(f"CascadeDiffuse progress: {idx}/{total}")
 
+    _status("CascadeDiffuse completed.")
     return final_result / (4.0 * np.pi)
 
 
@@ -587,6 +647,7 @@ def RedshiftEvolving(
     inj_spectra = _validate_spectrum_2d(injSpectra)
     z_start = _validate_z_start(zStart)
     z_distrib = _validate_z_distribution(zDistrib)
+    _status(f"Running RedshiftEvolving for zStart={z_start:.6g}")
 
     volume_norms, z_array = _volume_norms(z_start, z_distrib)
     params = list(
@@ -594,9 +655,14 @@ def RedshiftEvolving(
     )
 
     final_result = np.zeros(len(energies), dtype=np.float64)
-    for volume_norm, z_window, inj_row in reversed(params):
+    total = len(params)
+    marks = _progress_marks(total)
+    for idx, (volume_norm, z_window, inj_row) in enumerate(reversed(params), start=1):
         final_result = RedshiftingCycle(final_result + volume_norm * inj_row, z_window)
+        if idx in marks:
+            _status(f"RedshiftEvolving progress: {idx}/{total}")
 
+    _status("RedshiftEvolving completed.")
     return final_result / (4.0 * np.pi)
 
 
@@ -608,6 +674,7 @@ def AttenuateEvolving(
     inj_spectra = _validate_spectrum_2d(injSpectra)
     z_start = _validate_z_start(zStart)
     z_distrib = _validate_z_distribution(zDistrib)
+    _status(f"Running AttenuateEvolving for zStart={z_start:.6g}")
 
     s = _state()
     s.ensure_ebl_loaded()
@@ -626,9 +693,14 @@ def AttenuateEvolving(
     )
 
     final_result = np.zeros(len(energies), dtype=np.float64)
-    for volume_norm, z_window, step_row, zreg_row, inj_row in reversed(params):
+    total = len(params)
+    marks = _progress_marks(total)
+    for idx, (volume_norm, z_window, step_row, zreg_row, inj_row) in enumerate(reversed(params), start=1):
         final_result = AttenuationCycle(final_result + volume_norm * inj_row, z_window, step_row, zreg_row)
+        if idx in marks:
+            _status(f"AttenuateEvolving progress: {idx}/{total}")
 
+    _status("AttenuateEvolving completed.")
     return final_result / (4.0 * np.pi)
 
 
@@ -640,6 +712,7 @@ def CascadeEvolving(
     inj_spectra = _validate_spectrum_2d(injSpectra)
     z_start = _validate_z_start(zStart)
     z_distrib = _validate_z_distribution(zDistrib)
+    _status(f"Running CascadeEvolving for zStart={z_start:.6g}")
 
     s = _state()
     s.ensure_ebl_loaded()
@@ -658,9 +731,14 @@ def CascadeEvolving(
     )
 
     final_result = np.zeros(len(energies), dtype=np.float64)
-    for volume_norm, z_window, step_row, zreg_row, inj_row in reversed(params):
+    total = len(params)
+    marks = _progress_marks(total)
+    for idx, (volume_norm, z_window, step_row, zreg_row, inj_row) in enumerate(reversed(params), start=1):
         final_result = CascadeCycle(final_result + volume_norm * inj_row, z_window, step_row, zreg_row)
+        if idx in marks:
+            _status(f"CascadeEvolving progress: {idx}/{total}")
 
+    _status("CascadeEvolving completed.")
     return final_result / (4.0 * np.pi)
 
 
@@ -669,13 +747,16 @@ def changeEBLModel(EBL: int) -> None:
 
     s = _state()
     new_ebl = int(EBL)
+    old_ebl = s.ebl_index
     if new_ebl not in EBL_NAME_MAP:
         raise ValueError(f"Invalid EBL index: {new_ebl}")
     if new_ebl == s.ebl_index:
         raise ValueError(f"{EBL_DESCRIPTION_MAP[new_ebl]} is already the current EBL model")
 
+    _status(f"Changing EBL model from {EBL_DESCRIPTION_MAP[old_ebl]} to {EBL_DESCRIPTION_MAP[new_ebl]}...")
     s.load_ebl(new_ebl)
     EBLindex = s.ebl_index
+    _status("EBL model changed successfully.")
 
 
 def _load_ebl_mat_3d(state: GCascadeState, subdir: str, stem: str, ebl_name: str) -> np.ndarray:
@@ -720,6 +801,10 @@ def changeMagneticField(BField: float, gamma: float, EBL: int) -> None:
         raise ValueError(f"Invalid EBL index: {ebl}")
 
     ebl_name = EBL_NAME_MAP[ebl]
+    _status(
+        "Changing magnetic field cycle tables for EBL index "
+        f"{ebl} with B(z)={float(BField):.6g}*(1+z)^{float(gamma):.6g} Gauss."
+    )
 
     new_b_tesla = float(BField) / 10000.0
 
@@ -755,6 +840,7 @@ def changeMagneticField(BField: float, gamma: float, EBL: int) -> None:
 
     cycle_export = np.empty((len(zReg), len(energies), len(energies)), dtype=np.float64)
     d_e = dEnergiesGamma[None, :]
+    marks = _progress_marks(len(zReg))
 
     for i in range(len(zReg)):
         a = ppspec[i, :, :-1]
@@ -762,6 +848,8 @@ def changeMagneticField(BField: float, gamma: float, EBL: int) -> None:
         o1 = otsspec_weighted[i, :-1, :]
         o2 = otsspec_weighted[i, 1:, :]
         cycle_export[i, :, :] = 1.0e9 * ((a * d_e) @ o1 + (b * d_e) @ o2)
+        if (i + 1) in marks:
+            _status(f"changeMagneticField progress: {i + 1}/{len(zReg)}")
 
     cycle_dir = s.generated_library_path / "cycle-spec"
     cycle_dir.mkdir(parents=True, exist_ok=True)
@@ -788,6 +876,7 @@ def changeMagneticField(BField: float, gamma: float, EBL: int) -> None:
         b_field=float(BField),
         gamma=float(gamma),
     )
+    _status("Magnetic field update completed. Generated cycle tables and changelog were written.")
 
 
 # Snake_case aliases
@@ -821,12 +910,14 @@ __all__ = [
     "zReg",
     "dEnergiesGamma",
     "EBLindex",
+    "PROGRESS_ENABLED",
     "hubble",
     "cutoffPowerLaw",
     "specPlot",
     "diffuseDistancesIndex",
     "set_library_path",
     "set_generated_library_path",
+    "set_progress",
     "reset_state",
     "RedshiftingCycle",
     "AttenuationCycle",

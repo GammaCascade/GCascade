@@ -45,6 +45,13 @@ default. Override with:
 export GCASCADE_GENERATED_LIB_PATH=/custom/output/path
 ```
 
+Progress/status printing is enabled by default (useful for long cascade runs).
+Disable with:
+
+```bash
+export GCASCADE_PROGRESS=0
+```
+
 ## Quick Start (Minimal Example)
 
 ```python
