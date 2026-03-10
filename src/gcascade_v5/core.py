@@ -20,12 +20,50 @@ elecmass = 0.51099895e6  # eV
 echarge = 1.602176634e-19  # C
 sigmaTe = 6.65245873e-29  # m^2
 
-DEFAULT_LIBRARY_PATH = Path(
-    os.getenv("GCASCADE_LIB_PATH", "/Users/antonio/Desktop/Research/GCascade/LibrariesV4")
-)
-DEFAULT_GENERATED_LIBRARY_PATH = Path(
-    os.getenv("GCASCADE_GENERATED_LIB_PATH", "generated_libraries")
-)
+LIB_PATH_ENV_VAR = "GCASCADE_LIB_PATH"
+GENERATED_LIB_PATH_ENV_VAR = "GCASCADE_GENERATED_LIB_PATH"
+
+
+def _library_path_config_message() -> str:
+    return (
+        f"Configure with {LIB_PATH_ENV_VAR} (before import) or call "
+        "gcascade_v5.set_library_path('/path/to/LibrariesV4')."
+    )
+
+
+def _generated_library_path_config_message() -> str:
+    return (
+        f"Configure with {GENERATED_LIB_PATH_ENV_VAR} (before import) or call "
+        "gcascade_v5.set_generated_library_path('/path/to/output')."
+    )
+
+
+def _discover_default_library_path() -> Path:
+    env_path = os.getenv(LIB_PATH_ENV_VAR)
+    if env_path:
+        return Path(env_path).expanduser().resolve()
+
+    candidates = [
+        Path.cwd() / "LibrariesV4",
+        Path.cwd() / "GCascade" / "LibrariesV4",
+        Path.home() / "GCascade" / "LibrariesV4",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate.resolve()
+
+    # Fallback path used only when no known candidate exists.
+    # A detailed error message will explain how to configure this.
+    return (Path.cwd() / "LibrariesV4").resolve()
+
+
+def _discover_default_generated_library_path() -> Path:
+    env_path = os.getenv(GENERATED_LIB_PATH_ENV_VAR)
+    if env_path:
+        return Path(env_path).expanduser().resolve()
+    return (Path.cwd() / "generated_libraries").resolve()
+
+
 PROGRESS_ENABLED = os.getenv("GCASCADE_PROGRESS", "1") != "0"
 
 
@@ -168,7 +206,14 @@ class GCascadeState:
 
         fallback = self.library_path / "cycle-spec" / f"cyclespec{ebl_name}.mat"
         if not fallback.exists():
-            raise FileNotFoundError(f"Could not find cycle spec file for EBL '{ebl_name}'")
+            raise FileNotFoundError(
+                "Could not find cycle spec file for EBL "
+                f"'{ebl_name}'. Checked:\n"
+                f"- generated path: {generated}\n"
+                f"- library fallback: {fallback}\n"
+                f"{_library_path_config_message()}\n"
+                f"{_generated_library_path_config_message()}"
+            )
         return fallback
 
     def _load_step_size_rows(self) -> list[np.ndarray]:
@@ -191,20 +236,36 @@ class GCascadeState:
         rows = [(row[row > 0].astype(np.int64, copy=False) - 1) for row in arr]
         return rows
 
-    @staticmethod
-    def _load_csv(path: Path) -> np.ndarray:
+    def _load_csv(self, path: Path) -> np.ndarray:
         if not path.exists():
-            raise FileNotFoundError(f"Missing CSV file: {path}")
+            raise FileNotFoundError(
+                f"Missing CSV file: {path}\n"
+                f"Active library path: {self.library_path}\n"
+                f"{_library_path_config_message()}"
+            )
         try:
             return np.loadtxt(path, delimiter=",", dtype=np.float64)
         except ValueError:
             # Some legacy V4 table files use whitespace delimiters despite .csv suffix.
             return np.loadtxt(path, dtype=np.float64)
 
-    @staticmethod
-    def _load_mat_array(path: Path) -> np.ndarray:
+    def _load_mat_array(self, path: Path) -> np.ndarray:
         if not path.exists():
-            raise FileNotFoundError(f"Missing MAT file: {path}")
+            location = (
+                self.generated_library_path
+                if self.generated_library_path in path.parents
+                else self.library_path
+            )
+            guidance = (
+                _generated_library_path_config_message()
+                if self.generated_library_path in path.parents
+                else _library_path_config_message()
+            )
+            raise FileNotFoundError(
+                f"Missing MAT file: {path}\n"
+                f"Relevant base path: {location}\n"
+                f"{guidance}"
+            )
 
         payload = loadmat(path)
         keys = [k for k in payload.keys() if not k.startswith("__")]
@@ -243,8 +304,8 @@ def _state() -> GCascadeState:
     global _STATE, EBLindex
     if _STATE is None:
         _STATE = GCascadeState(
-            library_path=DEFAULT_LIBRARY_PATH,
-            generated_library_path=DEFAULT_GENERATED_LIBRARY_PATH,
+            library_path=_discover_default_library_path(),
+            generated_library_path=_discover_default_generated_library_path(),
             ebl_index=EBLindex,
         )
     return _STATE
@@ -261,8 +322,14 @@ def set_library_path(path: str | os.PathLike[str]) -> None:
     """Set the read-only path to precomputed V4 libraries."""
     global _STATE
     p = Path(path).expanduser().resolve()
+    if not p.exists():
+        raise FileNotFoundError(
+            f"Library path does not exist: {p}\n{_library_path_config_message()}"
+        )
+    if not p.is_dir():
+        raise NotADirectoryError(f"Library path is not a directory: {p}")
     if _STATE is None:
-        _STATE = GCascadeState(p, DEFAULT_GENERATED_LIBRARY_PATH)
+        _STATE = GCascadeState(p, _discover_default_generated_library_path())
     else:
         _STATE.library_path = p
         _STATE.reset()
@@ -272,10 +339,22 @@ def set_generated_library_path(path: str | os.PathLike[str]) -> None:
     """Set path where V5-generated tables are written/read."""
     global _STATE
     p = Path(path).expanduser().resolve()
+    if p.exists() and not p.is_dir():
+        raise NotADirectoryError(f"Generated library path is not a directory: {p}")
     if _STATE is None:
-        _STATE = GCascadeState(DEFAULT_LIBRARY_PATH, p)
+        _STATE = GCascadeState(_discover_default_library_path(), p)
     else:
         _STATE.generated_library_path = p
+
+
+def get_library_path() -> Path:
+    """Return the active path to precomputed V4 libraries."""
+    return _state().library_path
+
+
+def get_generated_library_path() -> Path:
+    """Return the active path where generated cycle tables are read/written."""
+    return _state().generated_library_path
 
 
 def diffuseDistancesIndex(x: float) -> int:
@@ -917,6 +996,8 @@ __all__ = [
     "diffuseDistancesIndex",
     "set_library_path",
     "set_generated_library_path",
+    "get_library_path",
+    "get_generated_library_path",
     "set_progress",
     "reset_state",
     "RedshiftingCycle",

@@ -29,20 +29,40 @@ pip install -e . --no-build-isolation
 
 ## Data Paths
 
-By default, GCascadeV5 reads precomputed tables from:
-`/Users/antonio/Desktop/Research/GCascade/LibrariesV4`
+GCascadeV5 reads precomputed V4 tables from a configurable `library_path`.
+Recommended: set this explicitly on each machine.
 
-Override table input path:
+Set table input path before import:
 
 ```bash
 export GCASCADE_LIB_PATH=/path/to/LibrariesV4
 ```
 
-`changeMagneticField` writes generated tables to `generated_libraries/` by
-default. Override with:
+Or set it at runtime:
+
+```python
+import gcascade_v5 as gc
+gc.set_library_path("/path/to/LibrariesV4")
+```
+
+`changeMagneticField` reads/writes generated cycle tables from/to
+`generated_library_path` (default: `./generated_libraries`). Override with:
 
 ```bash
 export GCASCADE_GENERATED_LIB_PATH=/custom/output/path
+```
+
+or:
+
+```python
+gc.set_generated_library_path("/custom/output/path")
+```
+
+Inspect active paths:
+
+```python
+print(gc.get_library_path())
+print(gc.get_generated_library_path())
 ```
 
 Progress/status printing is enabled by default (useful for long cascade runs).
