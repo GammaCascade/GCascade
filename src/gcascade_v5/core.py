@@ -4,12 +4,26 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 import os
+import sys
 import time
 
 import numpy as np
 from scipy.integrate import quad
 from scipy.interpolate import interp1d
 from scipy.io import loadmat, savemat
+
+try:  # Optional acceleration
+    from numba import njit
+
+    _NUMBA_AVAILABLE = True
+except Exception:  # pragma: no cover - fallback when numba is unavailable
+    _NUMBA_AVAILABLE = False
+
+    def njit(*args, **kwargs):  # type: ignore[override]
+        def _decorator(func):
+            return func
+
+        return _decorator
 
 # Physical constants (matched to GCascadeV4.wl)
 Mpc = 3.08568e24  # cm / Mpc
@@ -65,12 +79,21 @@ def _discover_default_generated_library_path() -> Path:
 
 
 PROGRESS_ENABLED = os.getenv("GCASCADE_PROGRESS", "1") != "0"
+NUMBA_ENABLED = _NUMBA_AVAILABLE and os.getenv("GCASCADE_NUMBA", "1") != "0"
 
 
 def set_progress(enabled: bool) -> None:
     """Enable or disable runtime status/progress printing."""
     global PROGRESS_ENABLED
     PROGRESS_ENABLED = bool(enabled)
+
+
+def set_numba(enabled: bool) -> None:
+    """Enable or disable numba acceleration when available."""
+    global NUMBA_ENABLED
+    if enabled and not _NUMBA_AVAILABLE:
+        raise RuntimeError("numba is not installed; install it or disable acceleration.")
+    NUMBA_ENABLED = bool(enabled)
 
 
 def _status(message: str) -> None:
@@ -86,6 +109,43 @@ def _progress_marks(total: int, n_marks: int = 10) -> set[int]:
     marks = {max(1, int(round(total * i / n_marks))) for i in range(1, n_marks + 1)}
     marks.add(total)
     return marks
+
+
+class _ProgressBar:
+    def __init__(self, label: str, total: int) -> None:
+        self.label = label
+        self.total = max(1, int(total))
+        self.enabled = PROGRESS_ENABLED
+        self._last_percent = -1
+        self._finished = False
+        if self.enabled:
+            self.update(0)
+
+    def update(self, current: int) -> None:
+        if not self.enabled or self._finished:
+            return
+        current_clamped = max(0, min(int(current), self.total))
+        percent = int((100 * current_clamped) / self.total)
+        if percent == self._last_percent and current_clamped not in (0, self.total):
+            return
+
+        width = 30
+        filled = (width * percent) // 100
+        bar = "#" * filled + "-" * (width - filled)
+        sys.stdout.write(f"\r{self.label}: [{bar}] {percent:3d}%")
+        sys.stdout.flush()
+        self._last_percent = percent
+
+        if current_clamped >= self.total:
+            self.close()
+
+    def close(self) -> None:
+        if not self.enabled or self._finished:
+            return
+        sys.stdout.write("\n")
+        sys.stdout.flush()
+        self._finished = True
+
 
 def hubble(z: float | np.ndarray) -> float | np.ndarray:
     """Hubble rate in (km/s)/Mpc."""
@@ -191,12 +251,12 @@ class GCascadeState:
             self.imfp_ebl = self._load_csv(imfp_ebl_path)
 
         self.imfp = self.imfp_cmb + self.imfp_ebl
-        self.extinction_coeffs = np.exp(-Mpc * self.imfp)
+        self.extinction_coeffs = np.ascontiguousarray(np.exp(-Mpc * self.imfp), dtype=np.float64)
 
         cycle_path = self._resolve_cycle_spec_path(ebl_name)
         cycle_raw = self._load_mat_array(cycle_path)
         cycle_raw = self._ensure_cycle_shape(cycle_raw)
-        self.cycle_spec = cycle_raw * 1.0e9
+        self.cycle_spec = np.ascontiguousarray(cycle_raw * 1.0e9, dtype=np.float64)
         self.ebl_index = ebl_index
 
     def _resolve_cycle_spec_path(self, ebl_name: str) -> Path:
@@ -424,6 +484,68 @@ def _prepare_log_spectrum(spec: np.ndarray) -> np.ndarray:
     return log_spec
 
 
+@njit(cache=True)
+def _attenuation_cycle_numba(
+    inj_spectra: np.ndarray,
+    extinction_coeffs: np.ndarray,
+    step_size_array_local: np.ndarray,
+    zreg_index_array_local: np.ndarray,
+) -> np.ndarray:
+    n_energies = inj_spectra.shape[0]
+    final_result = inj_spectra.copy()
+
+    for k in range(step_size_array_local.shape[0]):
+        z_region_index = zreg_index_array_local[k]
+        this_step_size = step_size_array_local[k]
+        coeff_row = extinction_coeffs[z_region_index]
+        for e in range(n_energies):
+            final_result[e] = (coeff_row[e] ** this_step_size) * final_result[e]
+
+    return final_result
+
+
+@njit(cache=True)
+def _cascade_cycle_numba(
+    inj_spectra: np.ndarray,
+    extinction_coeffs: np.ndarray,
+    cycle_spec: np.ndarray,
+    d_energies_gamma: np.ndarray,
+    step_size_array_local: np.ndarray,
+    zreg_index_array_local: np.ndarray,
+) -> np.ndarray:
+    n_energies = inj_spectra.shape[0]
+    final_result = inj_spectra.copy()
+
+    attenuated_spec = np.empty(n_energies, dtype=np.float64)
+    delta = np.empty(n_energies, dtype=np.float64)
+    result = np.empty(n_energies, dtype=np.float64)
+
+    for k in range(step_size_array_local.shape[0]):
+        z_region_index = zreg_index_array_local[k]
+        this_step_size = step_size_array_local[k]
+        coeff_row = extinction_coeffs[z_region_index]
+        cycle_slice = cycle_spec[z_region_index]
+
+        for e in range(n_energies):
+            atten = (coeff_row[e] ** this_step_size) * final_result[e]
+            attenuated_spec[e] = atten
+            delta[e] = final_result[e] - atten
+
+        for out_idx in range(n_energies):
+            acc = 0.0
+            for in_idx in range(n_energies - 1):
+                acc += (
+                    delta[in_idx] * cycle_slice[in_idx, out_idx]
+                    + delta[in_idx + 1] * cycle_slice[in_idx + 1, out_idx]
+                ) * d_energies_gamma[in_idx]
+            result[out_idx] = acc + attenuated_spec[out_idx]
+
+        for e in range(n_energies):
+            final_result[e] = result[e]
+
+    return final_result
+
+
 def RedshiftingCycle(injSpectra: np.ndarray, zArrayLocal: np.ndarray) -> np.ndarray:
     """Internal redshifting cycle used by point/diffuse/evolving APIs."""
     stretched_energies = energies * ((1.0 + zArrayLocal[0]) / (1.0 + zArrayLocal[-1]))
@@ -455,9 +577,24 @@ def AttenuationCycle(
     s = _state()
     s.ensure_ebl_loaded()
 
-    final_result = np.asarray(injSpectra, dtype=np.float64).copy()
-    for z_region_index, this_step_size in zip(zRegIndexArrayLocal, stepSizeArrayLocal, strict=True):
-        final_result = np.power(s.extinction_coeffs[z_region_index], this_step_size) * final_result
+    inj = np.asarray(injSpectra, dtype=np.float64)
+    step_sizes = np.asarray(stepSizeArrayLocal, dtype=np.float64)
+    z_indices = np.asarray(zRegIndexArrayLocal, dtype=np.int64)
+
+    if NUMBA_ENABLED:
+        final_result = _attenuation_cycle_numba(
+            inj,
+            s.extinction_coeffs,
+            step_sizes,
+            z_indices,
+        )
+    else:
+        if step_sizes.size == 0:
+            final_result = inj.copy()
+        else:
+            log_extinction = np.log(s.extinction_coeffs[z_indices])
+            log_attenuation = np.sum(log_extinction * step_sizes[:, None], axis=0)
+            final_result = np.exp(log_attenuation) * inj
 
     return RedshiftingCycle(final_result, zArrayLocal)
 
@@ -472,17 +609,28 @@ def CascadeCycle(
     s = _state()
     s.ensure_ebl_loaded()
 
-    final_result = np.asarray(injSpectra, dtype=np.float64).copy()
+    inj = np.asarray(injSpectra, dtype=np.float64)
+    step_sizes = np.asarray(stepSizeArrayLocal, dtype=np.float64)
+    z_indices = np.asarray(zRegIndexArrayLocal, dtype=np.int64)
 
-    for z_region_index, this_step_size in zip(zRegIndexArrayLocal, stepSizeArrayLocal, strict=True):
-        attenuated_spec = np.power(s.extinction_coeffs[z_region_index], this_step_size) * final_result
-        delta = final_result - attenuated_spec
+    if NUMBA_ENABLED:
+        final_result = _cascade_cycle_numba(
+            inj,
+            s.extinction_coeffs,
+            s.cycle_spec,
+            dEnergiesGamma,
+            step_sizes,
+            z_indices,
+        )
+    else:
+        final_result = inj.copy()
+        for z_region_index, this_step_size in zip(z_indices, step_sizes, strict=True):
+            attenuated_spec = np.power(s.extinction_coeffs[z_region_index], this_step_size) * final_result
+            delta = final_result - attenuated_spec
 
-        scaled = delta[:, None] * s.cycle_spec[z_region_index]
-        trapezoid_kernel = scaled[1:, :] + scaled[:-1, :]
-        result = np.sum(trapezoid_kernel * dEnergiesGamma[:, None], axis=0) + attenuated_spec
-
-        final_result = result
+            scaled = s.cycle_spec[z_region_index] * delta[:, None]
+            result = attenuated_spec + (scaled[:-1, :] + scaled[1:, :]).T @ dEnergiesGamma
+            final_result = result
 
     return RedshiftingCycle(final_result, zArrayLocal)
 
@@ -530,8 +678,11 @@ def RedshiftPoint(injSpectraPre: np.ndarray | list[float], zStart: float) -> np.
     z_array = _build_z_windows(z_max_index)
 
     final_result = inj_spectra.copy()
-    for window in reversed(z_array):
+    total = len(z_array)
+    progress = _ProgressBar("RedshiftPoint", total)
+    for idx, window in enumerate(reversed(z_array), start=1):
         final_result = RedshiftingCycle(final_result, window)
+        progress.update(idx)
 
     d_l = _luminosity_distance_mpc(z_start)
     _status("RedshiftPoint completed.")
@@ -559,11 +710,10 @@ def AttenuatePoint(injSpectraPre: np.ndarray | list[float], zStart: float) -> np
 
     final_result = inj_spectra.copy()
     total = len(params)
-    marks = _progress_marks(total)
+    progress = _ProgressBar("AttenuatePoint", total)
     for idx, (z_window, step_row, zreg_row) in enumerate(reversed(params), start=1):
         final_result = AttenuationCycle(final_result, z_window, step_row, zreg_row)
-        if idx in marks:
-            _status(f"AttenuatePoint progress: {idx}/{total}")
+        progress.update(idx)
 
     d_l = _luminosity_distance_mpc(z_start)
     _status("AttenuatePoint completed.")
@@ -591,11 +741,10 @@ def CascadePoint(injSpectraPre: np.ndarray | list[float], zStart: float) -> np.n
 
     final_result = inj_spectra.copy()
     total = len(params)
-    marks = _progress_marks(total)
+    progress = _ProgressBar("CascadePoint", total)
     for idx, (z_window, step_row, zreg_row) in enumerate(reversed(params), start=1):
         final_result = CascadeCycle(final_result, z_window, step_row, zreg_row)
-        if idx in marks:
-            _status(f"CascadePoint progress: {idx}/{total}")
+        progress.update(idx)
 
     d_l = _luminosity_distance_mpc(z_start)
     _status("CascadePoint completed.")
@@ -634,11 +783,10 @@ def RedshiftDiffuse(
 
     final_result = np.zeros_like(inj_spectra)
     total = len(params)
-    marks = _progress_marks(total)
+    progress = _ProgressBar("RedshiftDiffuse", total)
     for idx, (volume_norm, z_window) in enumerate(reversed(params), start=1):
         final_result = RedshiftingCycle(final_result + volume_norm * inj_spectra, z_window)
-        if idx in marks:
-            _status(f"RedshiftDiffuse progress: {idx}/{total}")
+        progress.update(idx)
 
     _status("RedshiftDiffuse completed.")
     return final_result / (4.0 * np.pi)
@@ -671,11 +819,10 @@ def AttenuateDiffuse(
 
     final_result = np.zeros_like(inj_spectra)
     total = len(params)
-    marks = _progress_marks(total)
+    progress = _ProgressBar("AttenuateDiffuse", total)
     for idx, (volume_norm, z_window, step_row, zreg_row) in enumerate(reversed(params), start=1):
         final_result = AttenuationCycle(final_result + volume_norm * inj_spectra, z_window, step_row, zreg_row)
-        if idx in marks:
-            _status(f"AttenuateDiffuse progress: {idx}/{total}")
+        progress.update(idx)
 
     _status("AttenuateDiffuse completed.")
     return final_result / (4.0 * np.pi)
@@ -708,11 +855,10 @@ def CascadeDiffuse(
 
     final_result = np.zeros_like(inj_spectra)
     total = len(params)
-    marks = _progress_marks(total)
+    progress = _ProgressBar("CascadeDiffuse", total)
     for idx, (volume_norm, z_window, step_row, zreg_row) in enumerate(reversed(params), start=1):
         final_result = CascadeCycle(final_result + volume_norm * inj_spectra, z_window, step_row, zreg_row)
-        if idx in marks:
-            _status(f"CascadeDiffuse progress: {idx}/{total}")
+        progress.update(idx)
 
     _status("CascadeDiffuse completed.")
     return final_result / (4.0 * np.pi)
@@ -735,11 +881,10 @@ def RedshiftEvolving(
 
     final_result = np.zeros(len(energies), dtype=np.float64)
     total = len(params)
-    marks = _progress_marks(total)
+    progress = _ProgressBar("RedshiftEvolving", total)
     for idx, (volume_norm, z_window, inj_row) in enumerate(reversed(params), start=1):
         final_result = RedshiftingCycle(final_result + volume_norm * inj_row, z_window)
-        if idx in marks:
-            _status(f"RedshiftEvolving progress: {idx}/{total}")
+        progress.update(idx)
 
     _status("RedshiftEvolving completed.")
     return final_result / (4.0 * np.pi)
@@ -773,11 +918,10 @@ def AttenuateEvolving(
 
     final_result = np.zeros(len(energies), dtype=np.float64)
     total = len(params)
-    marks = _progress_marks(total)
+    progress = _ProgressBar("AttenuateEvolving", total)
     for idx, (volume_norm, z_window, step_row, zreg_row, inj_row) in enumerate(reversed(params), start=1):
         final_result = AttenuationCycle(final_result + volume_norm * inj_row, z_window, step_row, zreg_row)
-        if idx in marks:
-            _status(f"AttenuateEvolving progress: {idx}/{total}")
+        progress.update(idx)
 
     _status("AttenuateEvolving completed.")
     return final_result / (4.0 * np.pi)
@@ -811,11 +955,10 @@ def CascadeEvolving(
 
     final_result = np.zeros(len(energies), dtype=np.float64)
     total = len(params)
-    marks = _progress_marks(total)
+    progress = _ProgressBar("CascadeEvolving", total)
     for idx, (volume_norm, z_window, step_row, zreg_row, inj_row) in enumerate(reversed(params), start=1):
         final_result = CascadeCycle(final_result + volume_norm * inj_row, z_window, step_row, zreg_row)
-        if idx in marks:
-            _status(f"CascadeEvolving progress: {idx}/{total}")
+        progress.update(idx)
 
     _status("CascadeEvolving completed.")
     return final_result / (4.0 * np.pi)
@@ -944,7 +1087,7 @@ def changeMagneticField(BField: float, gamma: float, EBL: int) -> None:
 
     # Match V4 behavior by activating the updated cycle table immediately.
     if ebl == s.ebl_index:
-        s.cycle_spec = cycle_export * 1.0e9
+        s.cycle_spec = np.ascontiguousarray(cycle_export * 1.0e9, dtype=np.float64)
     else:
         s.load_ebl(ebl)
         EBLindex = s.ebl_index
@@ -990,6 +1133,7 @@ __all__ = [
     "dEnergiesGamma",
     "EBLindex",
     "PROGRESS_ENABLED",
+    "NUMBA_ENABLED",
     "hubble",
     "cutoffPowerLaw",
     "specPlot",
@@ -999,6 +1143,7 @@ __all__ = [
     "get_library_path",
     "get_generated_library_path",
     "set_progress",
+    "set_numba",
     "reset_state",
     "RedshiftingCycle",
     "AttenuationCycle",

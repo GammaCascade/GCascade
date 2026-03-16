@@ -3,8 +3,8 @@ Template for exporting V4 benchmark fixtures used by scripts/run_parity.py.
 Run inside Mathematica/Wolfram Language after setting correct paths.
 *)
 
-baseV4 = "/Users/antonio/Desktop/Research/GCascade";
-outputBase = "/Users/antonio/Desktop/Research/GCascadeV5/benchmarks/v4_reference";
+baseV4 = "/path/to/GCascade";
+outputBase = "/path/to/GCascadeV5/benchmarks/v4_reference";
 
 SetDirectory[baseV4];
 Get["GCascadeV4.wl"];

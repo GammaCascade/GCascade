@@ -6,16 +6,16 @@ function-by-function numerical parity goals before any physics updates.
 ## Scope And Repository Roles
 
 - V5 development lives in this repository:
-  `/Users/antonio/Desktop/Research/GCascadeV5`
+  `/path/to/GCascadeV5`
 - V4 stays read-only and is used only for:
   - precomputed table reads from
-    `/Users/antonio/Desktop/Research/GCascade/LibrariesV4`
+    `/path/to/GCascade/LibrariesV4`
   - generation of reference outputs for parity checks
 
 ## Install
 
 ```bash
-cd /Users/antonio/Desktop/Research/GCascadeV5
+cd /path/to/GCascadeV5
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e '.[dev]'
@@ -70,6 +70,21 @@ Disable with:
 
 ```bash
 export GCASCADE_PROGRESS=0
+```
+
+When enabled, all point/diffuse/evolving redshift, attenuation, and cascade APIs
+show a dynamic `0% -> 100%` progress bar.
+
+Numba acceleration is enabled by default when installed. Disable with:
+
+```bash
+export GCASCADE_NUMBA=0
+```
+
+Or at runtime:
+
+```python
+gc.set_numba(False)
 ```
 
 ## Quick Start (Minimal Example)

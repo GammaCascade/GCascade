@@ -15,7 +15,8 @@ license = { text = "MIT" }
 dependencies = [
   "numpy>=1.24",
   "scipy>=1.10",
-  "matplotlib>=3.7"
+  "matplotlib>=3.7",
+  "numba>=0.59"
 ]
 
 [project.optional-dependencies]
