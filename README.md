@@ -9,7 +9,7 @@ function-by-function numerical parity goals before any physics updates.
   `/path/to/GCascadeV5`
 - V4 stays read-only and is used only for:
   - precomputed table reads from
-    `/path/to/GCascade/LibrariesV4`
+    `/path/to/GCascade/LibrariesV5`
   - generation of reference outputs for parity checks
 
 ## Install
@@ -32,17 +32,17 @@ pip install -e . --no-build-isolation
 GCascadeV5 reads precomputed V4 tables from a configurable `library_path`.
 Recommended: set this explicitly on each machine.
 
-Set table input path before import:
+Set table input path:
 
 ```bash
-export GCASCADE_LIB_PATH=/path/to/LibrariesV4
+export GCASCADE_LIB_PATH=/path/to/LibrariesV5
 ```
 
 Or set it at runtime:
 
 ```python
 import gcascade_v5 as gc
-gc.set_library_path("/path/to/LibrariesV4")
+gc.set_library_path("/path/to/LibrariesV5")
 ```
 
 `changeMagneticField` reads/writes generated cycle tables from/to
@@ -85,6 +85,13 @@ Or at runtime:
 
 ```python
 gc.set_numba(False)
+```
+
+Check numba status:
+
+```python
+print(gc.is_numba_available())
+print(gc.get_numba_enabled())
 ```
 
 ## Quick Start (Minimal Example)

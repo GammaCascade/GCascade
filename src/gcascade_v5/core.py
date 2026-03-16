@@ -41,7 +41,7 @@ GENERATED_LIB_PATH_ENV_VAR = "GCASCADE_GENERATED_LIB_PATH"
 def _library_path_config_message() -> str:
     return (
         f"Configure with {LIB_PATH_ENV_VAR} (before import) or call "
-        "gcascade_v5.set_library_path('/path/to/LibrariesV4')."
+        "gcascade_v5.set_library_path('/path/to/LibrariesV5')."
     )
 
 
@@ -58,9 +58,9 @@ def _discover_default_library_path() -> Path:
         return Path(env_path).expanduser().resolve()
 
     candidates = [
-        Path.cwd() / "LibrariesV4",
-        Path.cwd() / "GCascade" / "LibrariesV4",
-        Path.home() / "GCascade" / "LibrariesV4",
+        Path.cwd() / "LibrariesV5",
+        Path.cwd() / "GCascade" / "LibrariesV5",
+        Path.home() / "GCascade" / "LibrariesV5",
     ]
     for candidate in candidates:
         if candidate.exists():
@@ -68,7 +68,7 @@ def _discover_default_library_path() -> Path:
 
     # Fallback path used only when no known candidate exists.
     # A detailed error message will explain how to configure this.
-    return (Path.cwd() / "LibrariesV4").resolve()
+    return (Path.cwd() / "LibrariesV5").resolve()
 
 
 def _discover_default_generated_library_path() -> Path:
@@ -94,6 +94,16 @@ def set_numba(enabled: bool) -> None:
     if enabled and not _NUMBA_AVAILABLE:
         raise RuntimeError("numba is not installed; install it or disable acceleration.")
     NUMBA_ENABLED = bool(enabled)
+
+
+def is_numba_available() -> bool:
+    """Return True when numba is importable in the current Python environment."""
+    return bool(_NUMBA_AVAILABLE)
+
+
+def get_numba_enabled() -> bool:
+    """Return True when numba acceleration is currently enabled."""
+    return bool(NUMBA_ENABLED)
 
 
 def _status(message: str) -> None:
@@ -1144,6 +1154,8 @@ __all__ = [
     "get_generated_library_path",
     "set_progress",
     "set_numba",
+    "is_numba_available",
+    "get_numba_enabled",
     "reset_state",
     "RedshiftingCycle",
     "AttenuationCycle",

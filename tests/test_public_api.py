@@ -34,7 +34,7 @@ def test_snake_case_aliases_exist():
 
 
 def test_path_helpers_and_setters(tmp_path):
-    lib = (tmp_path / "LibrariesV4").resolve()
+    lib = (tmp_path / "LibrariesV5").resolve()
     generated = (tmp_path / "generated_libraries").resolve()
     lib.mkdir(parents=True, exist_ok=True)
 
@@ -49,4 +49,11 @@ def test_path_helpers_and_setters(tmp_path):
 
 def test_set_library_path_rejects_missing(tmp_path):
     with pytest.raises(FileNotFoundError):
-        g.set_library_path(tmp_path / "missing_libraries_v4")
+        g.set_library_path(tmp_path / "missing_libraries_v5")
+
+
+def test_numba_status_helpers_are_consistent():
+    assert isinstance(g.is_numba_available(), bool)
+    assert isinstance(g.get_numba_enabled(), bool)
+    if not g.is_numba_available():
+        assert g.get_numba_enabled() is False
