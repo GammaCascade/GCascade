@@ -8,6 +8,7 @@ __pycache__/
 .ipynb_checkpoints/
 
 # Large/generated scientific tables and benchmark artifacts
+LibrariesV5/
 generated_libraries/
 benchmarks/v4_reference/**/actual.csv
 benchmarks/v4_reference/**/diff.csv
