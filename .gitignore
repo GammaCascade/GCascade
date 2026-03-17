@@ -2,6 +2,7 @@ __pycache__/
 *.py[cod]
 *.so
 .venv/
+src/gcascade_v5.egg-info/
 .pytest_cache/
 .mypy_cache/
 .DS_Store
@@ -10,5 +11,6 @@ __pycache__/
 # Large/generated scientific tables and benchmark artifacts
 LibrariesV5/
 generated_libraries/
-benchmarks/v4_reference/**/actual.csv
-benchmarks/v4_reference/**/diff.csv
+benchmarks/v4_reference/*
+!benchmarks/v4_reference/.gitkeep
+benchmarks/parity_reports/

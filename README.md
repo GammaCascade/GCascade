@@ -201,31 +201,53 @@ np.savetxt(
 
 ## Parity Workflow Against V4
 
-1. Export V4 reference fixtures from Mathematica into
-   `benchmarks/v4_reference/` (template: `scripts/export_v4_reference_template.wl`).
-2. Run parity checks:
+1. Build deterministic fixture inputs/meta from the matrix spec:
 
 ```bash
-python3 scripts/run_parity.py
+python3 scripts/build_parity_fixtures.py --clean
 ```
 
-Each fixture directory must contain:
+2. Export V4 expected outputs (and sparse cycle checkpoints for B-field cases):
 
-- `meta.json` (function name + parameters, including `z_start`)
+```bash
+wolframscript -file scripts/export_v4_parity_fixtures.wl \
+  /path/to/GCascadeV5/benchmarks/v4_reference \
+  /path/to/GCascade
+```
+
+3. Run parity checks + summary report generation:
+
+```bash
+python3 scripts/run_parity.py --numba off
+```
+
+Each fixture directory contains:
+
+- `meta.json` (function + inputs kind + pre-actions + parity targets + V4 ref)
 - `expected.csv`
 - input files:
   - point: `inj.csv`
   - diffuse: `inj.csv`, `z_distrib.csv`
   - evolving: `inj2d.csv`, `z_distrib.csv`
+- optional for B-field sparse table parity:
+  - `expected_cycle_sparse.csv`
 
-Default acceptance threshold is `1e-3` relative error (with a small absolute
-floor near zero).
+Summary reports are written to:
+
+- `benchmarks/parity_reports/latest_summary.json`
+- `benchmarks/parity_reports/latest_summary.md`
+
+Tolerance defaults are loaded from `scripts/parity_matrix.json`:
+
+- output parity: rel `1e-3`, abs floor `1e-45` for near-zero bins
+- cycle sparse parity: rel `5e-3`, abs floor `1e-40` for near-zero entries
 
 ## Test Commands
 
 ```bash
 python3 -m pytest -q
-python3 scripts/run_parity.py
+python3 scripts/build_parity_fixtures.py --clean
+python3 scripts/run_parity.py --numba off
 ```
 
 ## Milestone Order
