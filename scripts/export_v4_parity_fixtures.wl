@@ -6,13 +6,15 @@ Usage:
     /path/to/GCascadeV5/benchmarks/v4_reference \
     /path/to/GCascade \
     [optional_case_filter_substring] \
-    [optional_case_limit]
+    [optional_case_limit] \
+    [optional_mode]
 
 Arguments:
   1) fixtures root (contains case dirs with meta.json and input CSV files)
   2) GCascadeV4 package root (contains GCascadeV4.wl and LibrariesV4)
   3) optional case name substring filter
   4) optional positive integer limit
+  5) optional mode: "resume" (default, skip already exported cases) or "force" (recompute all selected cases)
 *)
 
 args = Rest[$ScriptCommandLine];
@@ -20,6 +22,7 @@ fixturesRoot = If[Length[args] >= 1, args[[1]], FileNameJoin[{Directory[], "benc
 v4Base = If[Length[args] >= 2, args[[2]], "/path/to/GCascade"];
 caseFilter = If[Length[args] >= 3, args[[3]], ""];
 caseLimit = If[Length[args] >= 4, ToExpression[args[[4]]], -1];
+runMode = If[Length[args] >= 5, ToLowerCase[ToString[args[[5]]]], "resume"];
 
 metaPath[dir_] := FileNameJoin[{dir, "meta.json"}];
 expectedPath[dir_] := FileNameJoin[{dir, "expected.csv"}];
@@ -37,6 +40,12 @@ groupPriority[group_] := Which[
   group === "change_ebl", 1,
   group === "change_bfield", 2,
   True, 3
+];
+
+caseCompleteQ[dir_, meta_] := Module[{targets, needsSparse},
+  targets = If[KeyExistsQ[meta, "parity_targets"], meta["parity_targets"], {"output"}];
+  needsSparse = MemberQ[targets, "cycle_table_sparse"];
+  FileExistsQ[expectedPath[dir]] && If[needsSparse, FileExistsQ[expectedSparsePath[dir]], True]
 ];
 
 safeChangeEBL[target_Integer] := Module[{current},
@@ -110,6 +119,12 @@ Print["Using fixtures root: ", fixturesRoot];
 Print["Using V4 base: ", v4Base];
 If[StringLength[caseFilter] > 0, Print["Applying case filter: ", caseFilter]];
 If[caseLimit > 0, Print["Applying case limit: ", caseLimit]];
+Print["Export mode: ", runMode];
+
+If[MemberQ[{"resume", "force"}, runMode] == False,
+  Print["Invalid mode: ", runMode, ". Allowed values are 'resume' or 'force'."];
+  Abort[];
+];
 
 caseDirs = Select[
   FileNames["*", fixturesRoot],
@@ -129,12 +144,18 @@ casePairs = SortBy[
   }
 ];
 
+selectedCount = Length[casePairs];
+If[runMode === "resume",
+  casePairs = Select[casePairs, caseCompleteQ[#[[1]], #[[2]]] == False &];
+  Print["Resume mode: skipped ", selectedCount - Length[casePairs], " completed cases."];
+];
+
 If[caseLimit > 0,
   casePairs = Take[casePairs, UpTo[caseLimit]];
 ];
 
 If[Length[casePairs] == 0,
-  Print["No fixture case directories found under ", fixturesRoot];
+  Print["No pending fixture case directories to process under ", fixturesRoot];
   Exit[0];
 ];
 

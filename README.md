@@ -212,8 +212,14 @@ python3 scripts/build_parity_fixtures.py --clean
 ```bash
 wolframscript -file scripts/export_v4_parity_fixtures.wl \
   /path/to/GCascadeV5/benchmarks/v4_reference \
-  /path/to/GCascade
+  /path/to/GCascade \
+  "" \
+  -1 \
+  resume
 ```
+
+`resume` skips cases that already have exported expected files, so aborted runs can continue without starting from scratch.
+Use `force` as the last argument if you want to recompute all selected cases.
 
 3. Run parity checks + summary report generation:
 
