@@ -30,6 +30,7 @@ toVector[x_] := Flatten[x];
 
 (* Explicit GCascadeV4 context access to avoid Global` shadowing issues. *)
 v4[name_String] := Symbol["GCascadeV4`" <> name];
+v4Private[name_String] := Symbol["GCascadeV4`Private`" <> name];
 
 groupPriority[group_] := Which[
   group === "propagation", 0,
@@ -84,7 +85,7 @@ exportCycleSparse[dir_, sparseIndices_] := Module[{zIdx, eInIdx, eOutIdx, cycle,
   zIdx = sparseIndices["z_idx"];
   eInIdx = sparseIndices["e_in_idx"];
   eOutIdx = sparseIndices["e_out_idx"];
-  cycle = v4["cycleSpec"];
+  cycle = v4Private["cycleSpec"];
 
   If[Depth[cycle] < 4,
     Print["cycleSpec is not rank-3 for case ", FileNameTake[dir], ". Depth=", Depth[cycle]];
