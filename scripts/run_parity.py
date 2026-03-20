@@ -5,6 +5,7 @@ import argparse
 import json
 from pathlib import Path
 import sys
+import time
 from typing import Any
 
 import numpy as np
@@ -420,8 +421,11 @@ def main() -> int:
 
     results: list[dict[str, Any]] = []
     any_fail = False
+    total_cases = len(case_dirs)
 
-    for case_dir in case_dirs:
+    for idx, case_dir in enumerate(case_dirs, start=1):
+        case_start = time.perf_counter()
+        print(f"[{idx}/{total_cases}] START {case_dir.name}", flush=True)
         try:
             detail = run_case(
                 case_dir,
@@ -453,14 +457,16 @@ def main() -> int:
 
         results.append(detail)
         status = "PASS" if detail["passed"] else "FAIL"
+        elapsed = time.perf_counter() - case_start
         msg = (
-            f"{detail['case']}: {status} | function={detail['function']} | "
+            f"[{idx}/{total_cases}] {detail['case']}: {status} | function={detail['function']} | "
             f"output_max_rel={detail['output_max_rel']:.3e} | "
-            f"cycle_max_rel={detail['cycle_max_rel']:.3e}"
+            f"cycle_max_rel={detail['cycle_max_rel']:.3e} | "
+            f"elapsed={elapsed:.1f}s"
         )
         if "error" in detail:
             msg += f" | error={detail['error']}"
-        print(msg)
+        print(msg, flush=True)
 
         if not detail["passed"]:
             any_fail = True
