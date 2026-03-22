@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import shutil
 import sys
 import time
 from typing import Any
@@ -210,8 +211,13 @@ def sample_cycle_sparse(indices: dict[str, list[int]]) -> np.ndarray:
 
 
 def prepare_case_runtime(case_generated_dir: Path, numba_mode: str) -> None:
+    # Always start from a clean per-case runtime directory so partial/stale
+    # generated MAT files from interrupted runs cannot poison later cases.
+    if case_generated_dir.exists():
+        shutil.rmtree(case_generated_dir)
     reset_state()
     set_progress(False)
+    case_generated_dir.mkdir(parents=True, exist_ok=True)
     set_generated_library_path(case_generated_dir)
 
     if numba_mode == "off":
@@ -265,6 +271,8 @@ def run_case(
         abs_floor=output_abs_floor,
         near_zero_threshold=near_zero_threshold,
     )
+    output_rel_ok = bool(output_max_rel <= output_rel_tol)
+    output_abs_ok = bool(output_max_abs_near <= output_abs_floor)
     write_output_artifacts(case_dir, actual_output, output_diff)
 
     determinism_ok = True
@@ -275,6 +283,8 @@ def run_case(
     cycle_ok = True
     cycle_max_rel = 0.0
     cycle_max_abs_near = 0.0
+    cycle_rel_ok = True
+    cycle_abs_ok = True
 
     if "cycle_table_sparse" in parity_targets:
         if "cycle_sparse_indices" not in meta:
@@ -294,6 +304,8 @@ def run_case(
             abs_floor=cycle_abs_floor,
             near_zero_threshold=near_zero_threshold,
         )
+        cycle_rel_ok = bool(cycle_max_rel <= cycle_rel_tol)
+        cycle_abs_ok = bool(cycle_max_abs_near <= cycle_abs_floor)
 
         np.savetxt(case_dir / "actual_cycle_sparse.csv", actual_cycle, delimiter=",")
         np.savetxt(
@@ -310,7 +322,11 @@ def run_case(
         "inputs_kind": inputs_kind,
         "passed": passed,
         "output_ok": bool(output_ok),
+        "output_rel_ok": bool(output_rel_ok),
+        "output_abs_ok": bool(output_abs_ok),
         "cycle_ok": bool(cycle_ok),
+        "cycle_rel_ok": bool(cycle_rel_ok),
+        "cycle_abs_ok": bool(cycle_abs_ok),
         "determinism_ok": bool(determinism_ok),
         "output_max_rel": float(output_max_rel),
         "output_max_abs_near_zero": float(output_max_abs_near),
@@ -445,7 +461,11 @@ def main() -> int:
                 "inputs_kind": "<error>",
                 "passed": False,
                 "output_ok": False,
+                "output_rel_ok": False,
+                "output_abs_ok": False,
                 "cycle_ok": False,
+                "cycle_rel_ok": False,
+                "cycle_abs_ok": False,
                 "determinism_ok": False,
                 "output_max_rel": float("inf"),
                 "output_max_abs_near_zero": float("inf"),
@@ -461,11 +481,27 @@ def main() -> int:
         msg = (
             f"[{idx}/{total_cases}] {detail['case']}: {status} | function={detail['function']} | "
             f"output_max_rel={detail['output_max_rel']:.3e} | "
+            f"output_max_abs_nz={detail['output_max_abs_near_zero']:.3e} | "
             f"cycle_max_rel={detail['cycle_max_rel']:.3e} | "
+            f"cycle_max_abs_nz={detail['cycle_max_abs_near_zero']:.3e} | "
             f"elapsed={elapsed:.1f}s"
         )
         if "error" in detail:
             msg += f" | error={detail['error']}"
+        elif not detail["passed"]:
+            failed_dims: list[str] = []
+            if not detail.get("output_rel_ok", True):
+                failed_dims.append("output_rel")
+            if not detail.get("output_abs_ok", True):
+                failed_dims.append("output_abs")
+            if not detail.get("cycle_rel_ok", True):
+                failed_dims.append("cycle_rel")
+            if not detail.get("cycle_abs_ok", True):
+                failed_dims.append("cycle_abs")
+            if not detail.get("determinism_ok", True):
+                failed_dims.append("determinism")
+            if failed_dims:
+                msg += " | failed=" + ",".join(failed_dims)
         print(msg, flush=True)
 
         if not detail["passed"]:
