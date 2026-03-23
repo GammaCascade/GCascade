@@ -1,7 +1,6 @@
 # GCascadeV5
 
-`GCascadeV5` is a standalone Python port of `GCascadeV4`, developed with strict
-function-by-function numerical parity goals before any physics updates.
+`GCascadeV5` is a standalone Python port of `GCascadeV4`.
 
 ## Scope And Repository Roles
 
@@ -10,7 +9,6 @@ function-by-function numerical parity goals before any physics updates.
 - V4 stays read-only and is used only for:
   - precomputed table reads from
     `/path/to/GCascade/LibrariesV5`
-  - generation of reference outputs for parity checks
 
 ## Install
 
@@ -178,7 +176,7 @@ For a user-friendly walkthrough with explanations before each command, use:
 - `tutorial.ipynb`
 
 It includes setup, units, array formatting, point/diffuse/evolving examples,
-EBL/magnetic-field controls, plotting, and parity workflow instructions.
+EBL/magnetic-field controls, and plotting.
 
 ## Exporting Results
 
@@ -199,75 +197,8 @@ np.savetxt(
 )
 ```
 
-## Parity Workflow Against V4
-
-1. Build deterministic fixture inputs/meta from the matrix spec:
-
-```bash
-python3 scripts/build_parity_fixtures.py --clean
-```
-
-2. Export V4 expected outputs (and sparse cycle checkpoints for B-field cases):
-
-```bash
-wolframscript -file scripts/export_v4_parity_fixtures.wl \
-  /path/to/GCascadeV5/benchmarks/v4_reference \
-  /path/to/GCascade \
-  "" \
-  -1 \
-  resume
-```
-
-`resume` skips cases that already have exported expected files, so aborted runs can continue without starting from scratch.
-Use `force` as the last argument if you want to recompute all selected cases.
-
-3. Run parity checks + summary report generation:
-
-```bash
-python3 scripts/run_parity.py --numba off
-```
-
-Each fixture directory contains:
-
-- `meta.json` (function + inputs kind + pre-actions + parity targets + V4 ref)
-- `expected.csv`
-- input files:
-  - point: `inj.csv`
-  - diffuse: `inj.csv`, `z_distrib.csv`
-  - evolving: `inj2d.csv`, `z_distrib.csv`
-- optional for B-field sparse table parity:
-  - `expected_cycle_sparse.csv`
-
-Summary reports are written to:
-
-- `benchmarks/parity_reports/latest_summary.json`
-- `benchmarks/parity_reports/latest_summary.md`
-
-Tolerance defaults are loaded from `scripts/parity_matrix.json`:
-
-- output parity: rel `1e-3`, abs floor `1e-45` for near-zero bins
-- cycle sparse parity: rel `5e-3`, abs floor `1e-40` for near-zero entries
-
 ## Test Commands
 
 ```bash
 python3 -m pytest -q
-python3 scripts/build_parity_fixtures.py --clean
-python3 scripts/run_parity.py --numba off
 ```
-
-## Milestone Order
-
-1. `RedshiftPoint`
-2. `AttenuatePoint`
-3. `CascadePoint`
-4. `RedshiftDiffuse`
-5. `AttenuateDiffuse`
-6. `CascadeDiffuse`
-7. `RedshiftEvolving`
-8. `AttenuateEvolving`
-9. `CascadeEvolving`
-10. `changeEBLModel`
-11. `changeMagneticField`
-
-No physics updates should be introduced until parity milestones pass.

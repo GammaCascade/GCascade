@@ -11,6 +11,4 @@ src/gcascade_v5.egg-info/
 # Large/generated scientific tables and benchmark artifacts
 LibrariesV5/
 generated_libraries/
-benchmarks/v4_reference/*
-!benchmarks/v4_reference/.gitkeep
-benchmarks/parity_reports/
+local_archive/

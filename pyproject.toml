@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "gcascade-v5"
 version = "0.1.0"
-description = "Python port of GCascadeV4 with function-by-function parity goals"
+description = "Python port of GCascadeV4"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
