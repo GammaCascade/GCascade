@@ -10,5 +10,6 @@ src/gcascade_v5.egg-info/
 
 # Large/generated scientific tables and benchmark artifacts
 LibrariesV5/
+LibrariesV5-legacy/
 generated_libraries/
 local_archive/

@@ -1,98 +1,151 @@
 # GCascadeV5
 
-`GCascadeV5` is a standalone Python port of `GCascadeV4`.
+`GCascadeV5` is the Pythonized runtime for the GCascade V4 port.
 
-## Scope And Repository Roles
+The package now has two execution paths:
 
-- V5 development lives in this repository:
-  `/path/to/GCascadeV5`
-- V4 stays read-only and is used only for:
-  - precomputed table reads from
-    `/path/to/GCascade/LibrariesV5`
+- `gcascade_v5`
+  - the new HDF5-bundle runtime
+- `gcascade_v5.legacy`
+  - the preserved MAT/CSV-based implementation kept for regression checks and fallback
 
 ## Install
 
+From a terminal, move into the cloned GCascadeV5 repository:
+
 ```bash
 cd /path/to/GCascadeV5
+```
+
+Create a virtual environment inside the repository:
+
+```bash
 python3 -m venv .venv
+```
+
+Activate the virtual environment:
+
+```bash
 source .venv/bin/activate
+```
+
+Install GCascadeV5, its runtime dependencies, and the tutorial/test tools:
+
+```bash
 pip install -e '.[dev]'
 ```
 
-If editable install fails on some systems, try:
+This installs GCascadeV5 in editable mode, so local code changes are used immediately, together with the packages needed to run the code, the tests, and the tutorial notebook.
+
+Required packages installed by the commands above:
+
+- `numpy`
+- `scipy`
+- `h5py`
+- `matplotlib`
+- `notebook` for Jupyter Notebook and `tutorial.ipynb`
+
+Open the tutorial with:
 
 ```bash
-pip install -e . --no-build-isolation
+jupyter notebook tutorial.ipynb
+```
+
+Optional performance package:
+
+- `numba`
+
+Install the optional accelerator with:
+
+```bash
+pip install -e '.[performance]'
+```
+
+## Library Format
+
+The canonical GCascadeV5 library format is now:
+
+- HDF5 data files: `.h5`
+- one manifest file: `bundle_manifest.json`
+
+Legacy `.mat` and `.csv` files are no longer the canonical runtime format. They are supported only as import/export compatibility formats.
+
+## Converting A Legacy Library
+
+This repository now uses the following default layout:
+
+- `LibrariesV5-legacy`
+  - the preserved MAT/CSV library
+- `LibrariesV5`
+  - the new canonical HDF5 library used by the standard runtime
+
+Convert a legacy `LibrariesV5-legacy` tree into the canonical HDF5 bundle before using the new runtime:
+
+```python
+from pathlib import Path
+import gcascade_v5 as gc
+
+gc.convert_legacy_library(
+    Path("/path/to/legacy/LibrariesV5-legacy"),
+    Path("/path/to/hdf5/LibrariesV5"),
+    overwrite=False,
+)
+```
+
+After conversion, point the runtime at the bundle root:
+
+```python
+gc.set_library_path("/path/to/hdf5/LibrariesV5")
+```
+
+Inspect the bundle:
+
+```python
+print(gc.get_bundle_info())
+print(gc.list_generated_variants(1))
+```
+
+## Generated Magnetic-Field Variants
+
+`changeMagneticField` now writes HDF5 generated variants and updates the bundle manifest to activate the new file.
+
+```python
+import gcascade_v5 as gc
+
+gc.changeMagneticField(1e-18, 0.0, 1)
+print(gc.list_generated_variants(1))
+```
+
+If you need a legacy MAT export for compatibility work, use:
+
+```python
+gc.export_active_cycle_to_legacy_mat(1, "/tmp/cyclespecSL.mat")
 ```
 
 ## Data Paths
 
-GCascadeV5 reads precomputed V4 tables from a configurable `library_path`.
-Recommended: set this explicitly on each machine.
-
-Set table input path:
+Set the bundle root with:
 
 ```bash
-export GCASCADE_LIB_PATH=/path/to/LibrariesV5
+export GCASCADE_LIB_PATH=/path/to/hdf5/LibrariesV5
 ```
 
-Or set it at runtime:
+Optional override for generated HDF5 variants:
+
+```bash
+export GCASCADE_GENERATED_LIB_PATH=/path/to/generated
+```
+
+Or set them at runtime:
 
 ```python
 import gcascade_v5 as gc
-gc.set_library_path("/path/to/LibrariesV5")
+
+gc.set_library_path("/path/to/hdf5/LibrariesV5")
+gc.set_generated_library_path("/path/to/generated")
 ```
 
-`changeMagneticField` reads/writes generated cycle tables from/to
-`generated_library_path` (default: `./generated_libraries`). Override with:
-
-```bash
-export GCASCADE_GENERATED_LIB_PATH=/custom/output/path
-```
-
-or:
-
-```python
-gc.set_generated_library_path("/custom/output/path")
-```
-
-Inspect active paths:
-
-```python
-print(gc.get_library_path())
-print(gc.get_generated_library_path())
-```
-
-Progress/status printing is enabled by default (useful for long cascade runs).
-Disable with:
-
-```bash
-export GCASCADE_PROGRESS=0
-```
-
-When enabled, all point/diffuse/evolving redshift, attenuation, and cascade APIs
-show a dynamic `0% -> 100%` progress bar.
-
-Numba acceleration is enabled by default when installed. Disable with:
-
-```bash
-export GCASCADE_NUMBA=0
-```
-
-Or at runtime:
-
-```python
-gc.set_numba(False)
-```
-
-Check numba status:
-
-```python
-print(gc.is_numba_available())
-print(gc.get_numba_enabled())
-```
-
-## Quick Start (Minimal Example)
+## Quick Start
 
 ```python
 import gcascade_v5 as gc
@@ -101,104 +154,43 @@ inj = gc.cutoffPowerLaw(gc.energies, gamma=2.2, cutoff=1e7, amp=1e40)
 phi = gc.CascadePoint(inj, 0.3)
 ```
 
-## Core Arrays And Their Meaning
+## Legacy Fallback
 
-- `energies`
-  - gamma-ray energy grid in GeV
-  - length 300
-  - logarithmically spaced from `1e-1` to `1e12` GeV
-- `diffuseDistances`
-  - redshift grid used for diffuse/evolving source integration
-  - length 1036
-- `zReg`
-  - coarser redshift bins (`0` to `10` in steps of `0.01`) used to index
-    interaction tables
+The preserved pre-pythonization implementation remains available:
 
-## Unit Conventions (Important)
+```python
+import gcascade_v5.legacy as legacy
 
-- Injected spectrum `inj` (point + diffuse non-evolving):
-  - units: `GeV^-1 s^-1`
-  - shape: `(300,)`
-  - evaluated at `energies`
-- Redshift distribution `zDistrib` (diffuse + evolving):
-  - units: `cm^-3`
-  - shape: `(1036,)`
-  - evaluated at `diffuseDistances`
-- Evolving injected spectrum `inj2d`:
-  - units: `GeV^-1 s^-1`
-  - shape: `(1036, 300)`
-  - interpreted as `inj2d[z_index, energy_index]`
-- Typical outputs:
-  - point functions: `GeV^-1 s^-1 cm^-2`
-  - diffuse/evolving functions: `GeV^-1 s^-1 cm^-2 sr^-1`
+legacy.set_library_path("/path/to/legacy/LibrariesV5-legacy")
+phi_legacy = legacy.CascadePoint(inj, 0.3)
+```
 
-## Public API (V4-Compatible Names)
+This is the reference path used for regression validation.
 
-### Point-source propagation
+## Tests
 
-- `RedshiftPoint(inj, zStart)`
-- `AttenuatePoint(inj, zStart)`
-- `CascadePoint(inj, zStart)`
+Default tests:
 
-### Diffuse non-evolving population
+```bash
+PYTHONPATH=src python3 -m pytest -q
+```
 
-- `RedshiftDiffuse(inj, zStart, zDistrib)`
-- `AttenuateDiffuse(inj, zStart, zDistrib)`
-- `CascadeDiffuse(inj, zStart, zDistrib)`
+Slow legacy-vs-new cascade regression suite:
 
-### Diffuse evolving population
+```bash
+GCASCADE_RUN_SLOW=1 PYTHONPATH=src python3 -m pytest -q
+```
 
-- `RedshiftEvolving(inj2d, zStart, zDistrib)`
-- `AttenuateEvolving(inj2d, zStart, zDistrib)`
-- `CascadeEvolving(inj2d, zStart, zDistrib)`
+## Benchmark
 
-### Advanced model controls
+Run the benchmark helper against a legacy library:
 
-- `changeEBLModel(EBL_index)`
-- `changeMagneticField(BField_gauss, gamma, EBL_index)`
+```bash
+PYTHONPATH=src python3 benchmarks/benchmark_runtime.py --legacy-library LibrariesV5-legacy
+```
 
-Snake_case aliases are available for all public functions.
+## Tutorial
 
-## EBL Model Index Map
-
-- `0`: CMB only
-- `1`: Saldana-Lopez et al. (2021) [default]
-- `2`: Saldana-Lopez high
-- `3`: Saldana-Lopez low
-- `4`: Finke et al. (2022)
-- `5`: Franceschini & Rodighiero (2018)
-- `6`: Dominguez et al. (2011)
-
-## Tutorial Notebook
-
-For a user-friendly walkthrough with explanations before each command, use:
+The full user workflow, including dependency installation, bundle conversion, generated variants, and legacy fallback checks, is documented in:
 
 - `tutorial.ipynb`
-
-It includes setup, units, array formatting, point/diffuse/evolving examples,
-EBL/magnetic-field controls, and plotting.
-
-## Exporting Results
-
-Example export pattern:
-
-```python
-import numpy as np
-import gcascade_v5 as gc
-
-inj = gc.cutoffPowerLaw(gc.energies, gamma=2.2, cutoff=1e7, amp=1e40)
-phi = gc.CascadePoint(inj, 0.3)
-np.savetxt(
-    "point_cascade_flux.csv",
-    np.column_stack([gc.energies, phi]),
-    delimiter=",",
-    header="E_GeV,Phi_GeV^-1_s^-1_cm^-2",
-    comments="",
-)
-```
-
-## Test Commands
-
-```bash
-python3 -m pytest -q
-```
