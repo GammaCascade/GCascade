@@ -1,81 +1,56 @@
 from __future__ import annotations
 
+"""Public GCascadeV5 interface for photon and electron cascade calculations."""
+
 import importlib
-import os
-from pathlib import Path
 
 import numpy as np
 from scipy.interpolate import interp1d
 
-from . import bundle, builders, legacy
+from . import bundle
 from .attenuation import (
     propagate_diffuse_attenuation_fast,
-    propagate_diffuse_attenuation_numba,
-    propagate_diffuse_attenuation_window_numba,
     propagate_evolving_attenuation_fast,
-    propagate_evolving_attenuation_numba,
-    propagate_evolving_attenuation_window_numba,
     propagate_point_attenuation_fast,
-    propagate_point_attenuation_numba,
-    propagate_point_attenuation_window_numba,
 )
-from .cascade import (
-    propagate_diffuse_cascade_fast,
-    propagate_diffuse_cascade_numba,
-    propagate_diffuse_cascade_window_numba,
-    propagate_evolving_cascade_fast,
-    propagate_evolving_cascade_numba,
-    propagate_evolving_cascade_window_numba,
-    propagate_point_cascade_fast,
-    propagate_point_cascade_numba,
-    propagate_point_cascade_window_numba,
-)
-from .config import (
-    ProgressBar,
-    get_numba_enabled,
-    is_numba_available,
-    set_numba,
-    set_progress,
-    status,
+from .config import ProgressBar, set_progress, status
+from .physics import (
+    EBL_DESCRIPTION_MAP,
+    EBL_NAME_MAP,
+    Mpc,
+    c,
+    cutoffPowerLaw,
+    dEnergiesGamma,
+    diffuseDistances,
+    diffuseSteps,
+    echarge,
+    elecmass,
+    energies,
+    hubble,
+    luminosity_distance_mpc,
+    mu0,
+    sigmaTe,
+    specPlot,
+    t,
+    zReg,
 )
 from .redshift import diffuse_distances_index, redshift_cycle
-from .state import (
-    get_generated_library_path,
-    get_library_path,
-    reset_state,
-    set_generated_library_path,
-    set_library_path,
-    state,
+from .results import CascadeResult
+from .state import LIB_PATH_ENV_VAR, get_library_path, reset_state, set_library_path, state
+from .transport import (
+    DEFAULT_CEL_LOG_BIN_THRESHOLD,
+    propagate_diffuse_transport,
+    propagate_evolving_transport,
+    propagate_point_transport,
 )
 
-
-Mpc = legacy.Mpc
-c = legacy.c
-t = legacy.t
-mu0 = legacy.mu0
-elecmass = legacy.elecmass
-echarge = legacy.echarge
-sigmaTe = legacy.sigmaTe
-
-energies = legacy.energies
-dEnergiesGamma = legacy.dEnergiesGamma
-diffuseSteps = legacy.diffuseSteps
-diffuseDistances = legacy.diffuseDistances
-zReg = legacy.zReg
-EBL_NAME_MAP = legacy.EBL_NAME_MAP
-EBL_DESCRIPTION_MAP = legacy.EBL_DESCRIPTION_MAP
-LIB_PATH_ENV_VAR = legacy.LIB_PATH_ENV_VAR
-GENERATED_LIB_PATH_ENV_VAR = legacy.GENERATED_LIB_PATH_ENV_VAR
-
-hubble = legacy.hubble
-cutoffPowerLaw = legacy.cutoffPowerLaw
-specPlot = legacy.specPlot
 
 _FALLBACK_RED_LEFT_IDX, _FALLBACK_RED_WEIGHTS, _ = bundle._build_redshift_tables()
 _state_module = importlib.import_module(".state", __package__)
 
 
 def _validate_z_start(z_start: float) -> float:
+    """Check that the source redshift lies inside the tabulated propagation range."""
     z = float(z_start)
     if z < 0.0:
         raise ValueError("zStart must be non-negative")
@@ -85,6 +60,7 @@ def _validate_z_start(z_start: float) -> float:
 
 
 def _validate_spectrum_1d(inj: np.ndarray | list[float], announce: bool = True) -> np.ndarray:
+    """Check that a one-dimensional injected spectrum matches the main energy grid."""
     arr = np.asarray(inj, dtype=np.float64)
     if arr.shape != energies.shape:
         raise ValueError(f"Injected spectrum must have shape {energies.shape}, got {arr.shape}")
@@ -93,7 +69,25 @@ def _validate_spectrum_1d(inj: np.ndarray | list[float], announce: bool = True) 
     return arr
 
 
+def _validate_optional_spectrum_1d(
+    inj: np.ndarray | list[float] | None,
+    *,
+    label: str,
+    announce: bool = True,
+) -> np.ndarray:
+    """Validate an optional one-dimensional spectrum, defaulting to zero injection."""
+    if inj is None:
+        return np.zeros_like(energies, dtype=np.float64)
+    arr = np.asarray(inj, dtype=np.float64)
+    if arr.shape != energies.shape:
+        raise ValueError(f"{label} spectrum must have shape {energies.shape}, got {arr.shape}")
+    if announce:
+        status(f"{label} spectrum properly formatted.")
+    return arr
+
+
 def _validate_spectrum_2d(inj: np.ndarray | list[list[float]], announce: bool = True) -> np.ndarray:
+    """Check that an evolving injection history covers all redshift windows and energies."""
     arr = np.asarray(inj, dtype=np.float64)
     target = (len(diffuseDistances), len(energies))
     if arr.shape != target:
@@ -103,7 +97,26 @@ def _validate_spectrum_2d(inj: np.ndarray | list[list[float]], announce: bool = 
     return arr
 
 
+def _validate_optional_spectrum_2d(
+    inj: np.ndarray | list[list[float]] | None,
+    *,
+    label: str,
+    announce: bool = True,
+) -> np.ndarray:
+    """Validate an optional evolving spectrum, defaulting to no electron injection."""
+    target = (len(diffuseDistances), len(energies))
+    if inj is None:
+        return np.zeros(target, dtype=np.float64)
+    arr = np.asarray(inj, dtype=np.float64)
+    if arr.shape != target:
+        raise ValueError(f"{label} evolving spectrum must have shape {target}, got {arr.shape}")
+    if announce:
+        status(f"{label} spectrum properly formatted.")
+    return arr
+
+
 def _validate_z_distribution(z_distrib: np.ndarray | list[float], announce: bool = True) -> np.ndarray:
+    """Check that the comoving source-density history is tabulated on the bundle redshift grid."""
     arr = np.asarray(z_distrib, dtype=np.float64)
     if arr.shape != diffuseDistances.shape:
         raise ValueError(
@@ -115,16 +128,18 @@ def _validate_z_distribution(z_distrib: np.ndarray | list[float], announce: bool
 
 
 def _redshift_cycle_callback(spec: np.ndarray, window_idx: int) -> np.ndarray:
+    """Apply one precomputed redshift step using the active bundle tables."""
     runtime = state()
     left_idx = _FALLBACK_RED_LEFT_IDX[window_idx]
     weights = _FALLBACK_RED_WEIGHTS[window_idx]
     if runtime.redshift_left_idx is not None and runtime.redshift_weights is not None:
         left_idx = runtime.redshift_left_idx[window_idx]
         weights = runtime.redshift_weights[window_idx]
-    return redshift_cycle(spec, left_idx=left_idx, weights=weights, use_numba=get_numba_enabled())
+    return redshift_cycle(spec, left_idx=left_idx, weights=weights)
 
 
 def _volume_norms(z_start: float, z_distrib: np.ndarray) -> np.ndarray:
+    """Convert a comoving emissivity history into per-window source power weights."""
     z_max_index = diffuse_distances_index(z_start) + 1
     z_interp = interp1d(
         diffuseDistances,
@@ -139,10 +154,12 @@ def _volume_norms(z_start: float, z_distrib: np.ndarray) -> np.ndarray:
 
 
 def diffuseDistancesIndex(x: float) -> int:
+    """Return the closest tabulated redshift-window index for a given z value."""
     return diffuse_distances_index(x)
 
 
 def RedshiftPoint(injSpectraPre: np.ndarray | list[float], zStart: float) -> np.ndarray:
+    """Redshift a point-source spectrum to the observer without interactions."""
     inj_spectra = _validate_spectrum_1d(injSpectraPre)
     z_start = _validate_z_start(zStart)
     status(f"Running RedshiftPoint for zStart={z_start:.6g}")
@@ -154,12 +171,13 @@ def RedshiftPoint(injSpectraPre: np.ndarray | list[float], zStart: float) -> np.
         final_result = _redshift_cycle_callback(final_result, window_idx)
         progress.update(display_idx)
 
-    d_l = legacy._luminosity_distance_mpc(z_start)
+    d_l = luminosity_distance_mpc(z_start)
     status("RedshiftPoint completed.")
     return ((1.0 + z_start) ** 2 * final_result) / (4.0 * np.pi * (d_l * Mpc) ** 2)
 
 
 def AttenuatePoint(injSpectraPre: np.ndarray | list[float], zStart: float) -> np.ndarray:
+    """Propagate a point-source photon spectrum with absorption but no secondaries."""
     inj_spectra = _validate_spectrum_1d(injSpectraPre)
     z_start = _validate_z_start(zStart)
     status(f"Running AttenuatePoint for zStart={z_start:.6g}")
@@ -168,73 +186,70 @@ def AttenuatePoint(injSpectraPre: np.ndarray | list[float], zStart: float) -> np
     runtime.ensure_ebl_loaded()
     z_max_index = diffuse_distances_index(z_start) + 1
     progress = ProgressBar("AttenuatePoint", z_max_index)
+    final_result = propagate_point_attenuation_fast(
+        inj_spectra,
+        z_max_index,
+        runtime.attenuation_vectors,
+        _redshift_cycle_callback,
+        progress=progress,
+    )
 
-    if get_numba_enabled() and runtime.attenuation_vectors is not None and runtime.redshift_left_idx is not None:
-        final_result = inj_spectra.copy()
-        for display_idx, window_idx in enumerate(range(z_max_index - 1, -1, -1), start=1):
-            final_result = propagate_point_attenuation_window_numba(
-                final_result,
-                runtime.attenuation_vectors[window_idx],
-                runtime.redshift_left_idx[window_idx],
-                runtime.redshift_weights[window_idx],
-            )
-            progress.update(display_idx)
-    else:
-        final_result = propagate_point_attenuation_fast(
-            inj_spectra,
-            z_max_index,
-            runtime.attenuation_vectors,
-            _redshift_cycle_callback,
-            progress=progress,
-        )
-
-    d_l = legacy._luminosity_distance_mpc(z_start)
+    d_l = luminosity_distance_mpc(z_start)
     status("AttenuatePoint completed.")
     return ((1.0 + z_start) ** 2 * final_result) / (4.0 * np.pi * (d_l * Mpc) ** 2)
 
 
-def CascadePoint(injSpectraPre: np.ndarray | list[float], zStart: float) -> np.ndarray:
-    inj_spectra = _validate_spectrum_1d(injSpectraPre)
+def CascadePoint(
+    gammaSpectraPre: np.ndarray | list[float],
+    zStart: float,
+    electronSpectraPre: np.ndarray | list[float] | None = None,
+    *,
+    return_state: bool = False,
+) -> np.ndarray | CascadeResult:
+    """Run the full gamma/electron cascade for a single source redshift."""
+    inj_spectra = _validate_spectrum_1d(gammaSpectraPre)
+    electron_spectra = _validate_optional_spectrum_1d(
+        electronSpectraPre,
+        label="Injected electron",
+        announce=electronSpectraPre is not None,
+    )
     z_start = _validate_z_start(zStart)
     status(f"Running CascadePoint for zStart={z_start:.6g}")
 
     runtime = state()
-    runtime.ensure_ebl_loaded(refresh_active_cycle=True)
+    runtime.ensure_transport_loaded()
     z_max_index = diffuse_distances_index(z_start) + 1
     progress = ProgressBar("CascadePoint", z_max_index)
 
-    if get_numba_enabled() and runtime.cycle_packed_array is not None:
-        final_result = inj_spectra.copy()
-        for display_idx, window_idx in enumerate(range(z_max_index - 1, -1, -1), start=1):
-            final_result = propagate_point_cascade_window_numba(
-                final_result,
-                int(runtime.row_ptr[window_idx]),
-                int(runtime.row_ptr[window_idx + 1]),
-                runtime.step_sizes,
-                runtime.zreg_indices,
-                runtime.extinction_coeffs,
-                runtime.cycle_packed_array,
-                runtime.redshift_left_idx[window_idx],
-                runtime.redshift_weights[window_idx],
-            )
-            progress.update(display_idx)
-    else:
-        final_result = propagate_point_cascade_fast(
-            inj_spectra,
-            z_max_index,
-            runtime.step_sizes,
-            runtime.row_ptr,
-            runtime.zreg_indices,
-            runtime.log_extinction_coeffs,
-            runtime.get_weighted_cycle_slice,
-            runtime.redshift_left_idx,
-            runtime.redshift_weights,
-            progress=progress,
-        )
+    result = propagate_point_transport(
+        inj_spectra,
+        electron_spectra,
+        z_max_index=z_max_index,
+        step_sizes=runtime.step_sizes,
+        row_ptr=runtime.row_ptr,
+        zreg_indices=runtime.zreg_indices,
+        pp_log_extinction=runtime.log_extinction_coeffs,
+        ics_log_extinction=runtime.log_ics_extinction_coeffs,
+        d_edt_ics=runtime.d_edt_ics,
+        get_pp_kernel=runtime.get_weighted_pp_slice,
+        get_pp_below_grid_energy=runtime.get_pp_below_grid_energy,
+        get_ics_gamma_kernel=runtime.get_weighted_ics_gamma_slice,
+        get_ics_electron_kernel=runtime.get_weighted_ics_electron_slice,
+        get_ics_gamma_row_energy=runtime.get_ics_gamma_row_energy,
+        get_ics_below_grid_energy=runtime.get_ics_below_grid_energy,
+        get_cel_data=runtime.get_ics_cel_data,
+        redshift_left_idx=runtime.redshift_left_idx,
+        redshift_weights=runtime.redshift_weights,
+        b_field_gauss=runtime.b_field_gauss,
+        b_field_gamma=runtime.b_field_gamma,
+        cel_threshold_log_width=DEFAULT_CEL_LOG_BIN_THRESHOLD,
+        progress=progress,
+    )
 
-    d_l = legacy._luminosity_distance_mpc(z_start)
+    d_l = luminosity_distance_mpc(z_start)
+    scaled = result.with_scaled_spectra(((1.0 + z_start) ** 2) / (4.0 * np.pi * (d_l * Mpc) ** 2))
     status("CascadePoint completed.")
-    return ((1.0 + z_start) ** 2 * final_result) / (4.0 * np.pi * (d_l * Mpc) ** 2)
+    return scaled if return_state else scaled.gamma
 
 
 def RedshiftDiffuse(
@@ -242,6 +257,7 @@ def RedshiftDiffuse(
     zStart: float,
     zDistrib: np.ndarray | list[float],
 ) -> np.ndarray:
+    """Redshift a diffuse emissivity history without any interactions."""
     inj_spectra = _validate_spectrum_1d(injSpectra)
     z_start = _validate_z_start(zStart)
     z_distrib = _validate_z_distribution(zDistrib)
@@ -263,6 +279,7 @@ def AttenuateDiffuse(
     zStart: float,
     zDistrib: np.ndarray | list[float],
 ) -> np.ndarray:
+    """Propagate a diffuse photon emissivity with absorption but no secondaries."""
     inj_spectra = _validate_spectrum_1d(injSpectra)
     z_start = _validate_z_start(zStart)
     z_distrib = _validate_z_distribution(zDistrib)
@@ -273,81 +290,72 @@ def AttenuateDiffuse(
     volume_norms = _volume_norms(z_start, z_distrib)
     z_max_index = len(volume_norms)
     progress = ProgressBar("AttenuateDiffuse", z_max_index)
-
-    if get_numba_enabled() and runtime.attenuation_vectors is not None:
-        final_result = np.zeros(len(energies), dtype=np.float64)
-        for display_idx, window_idx in enumerate(range(z_max_index - 1, -1, -1), start=1):
-            final_result = propagate_diffuse_attenuation_window_numba(
-                final_result,
-                volume_norms[window_idx] * inj_spectra,
-                runtime.attenuation_vectors[window_idx],
-                runtime.redshift_left_idx[window_idx],
-                runtime.redshift_weights[window_idx],
-            )
-            progress.update(display_idx)
-    else:
-        final_result = propagate_diffuse_attenuation_fast(
-            inj_spectra,
-            volume_norms,
-            z_max_index,
-            runtime.attenuation_vectors,
-            _redshift_cycle_callback,
-            progress=progress,
-        )
+    final_result = propagate_diffuse_attenuation_fast(
+        inj_spectra,
+        volume_norms,
+        z_max_index,
+        runtime.attenuation_vectors,
+        _redshift_cycle_callback,
+        progress=progress,
+    )
 
     status("AttenuateDiffuse completed.")
     return final_result / (4.0 * np.pi)
 
 
 def CascadeDiffuse(
-    injSpectra: np.ndarray | list[float],
+    gammaSpectra: np.ndarray | list[float],
     zStart: float,
     zDistrib: np.ndarray | list[float],
-) -> np.ndarray:
-    inj_spectra = _validate_spectrum_1d(injSpectra)
+    electronSpectra: np.ndarray | list[float] | None = None,
+    *,
+    return_state: bool = False,
+) -> np.ndarray | CascadeResult:
+    """Run the full cascade for a diffuse source class with one spectral template."""
+    inj_spectra = _validate_spectrum_1d(gammaSpectra)
+    electron_spectra = _validate_optional_spectrum_1d(
+        electronSpectra,
+        label="Injected electron",
+        announce=electronSpectra is not None,
+    )
     z_start = _validate_z_start(zStart)
     z_distrib = _validate_z_distribution(zDistrib)
     status(f"Running CascadeDiffuse for zStart={z_start:.6g}")
 
     runtime = state()
-    runtime.ensure_ebl_loaded(refresh_active_cycle=True)
+    runtime.ensure_transport_loaded()
     volume_norms = _volume_norms(z_start, z_distrib)
     z_max_index = len(volume_norms)
     progress = ProgressBar("CascadeDiffuse", z_max_index)
 
-    if get_numba_enabled() and runtime.cycle_packed_array is not None:
-        final_result = np.zeros(len(energies), dtype=np.float64)
-        for display_idx, window_idx in enumerate(range(z_max_index - 1, -1, -1), start=1):
-            final_result = propagate_diffuse_cascade_window_numba(
-                final_result,
-                volume_norms[window_idx] * inj_spectra,
-                int(runtime.row_ptr[window_idx]),
-                int(runtime.row_ptr[window_idx + 1]),
-                runtime.step_sizes,
-                runtime.zreg_indices,
-                runtime.extinction_coeffs,
-                runtime.cycle_packed_array,
-                runtime.redshift_left_idx[window_idx],
-                runtime.redshift_weights[window_idx],
-            )
-            progress.update(display_idx)
-    else:
-        final_result = propagate_diffuse_cascade_fast(
-            inj_spectra,
-            volume_norms,
-            z_max_index,
-            runtime.step_sizes,
-            runtime.row_ptr,
-            runtime.zreg_indices,
-            runtime.log_extinction_coeffs,
-            runtime.get_weighted_cycle_slice,
-            runtime.redshift_left_idx,
-            runtime.redshift_weights,
-            progress=progress,
-        )
+    result = propagate_diffuse_transport(
+        inj_spectra,
+        electron_spectra,
+        volume_norms=volume_norms,
+        z_max_index=z_max_index,
+        step_sizes=runtime.step_sizes,
+        row_ptr=runtime.row_ptr,
+        zreg_indices=runtime.zreg_indices,
+        pp_log_extinction=runtime.log_extinction_coeffs,
+        ics_log_extinction=runtime.log_ics_extinction_coeffs,
+        d_edt_ics=runtime.d_edt_ics,
+        get_pp_kernel=runtime.get_weighted_pp_slice,
+        get_pp_below_grid_energy=runtime.get_pp_below_grid_energy,
+        get_ics_gamma_kernel=runtime.get_weighted_ics_gamma_slice,
+        get_ics_electron_kernel=runtime.get_weighted_ics_electron_slice,
+        get_ics_gamma_row_energy=runtime.get_ics_gamma_row_energy,
+        get_ics_below_grid_energy=runtime.get_ics_below_grid_energy,
+        get_cel_data=runtime.get_ics_cel_data,
+        redshift_left_idx=runtime.redshift_left_idx,
+        redshift_weights=runtime.redshift_weights,
+        b_field_gauss=runtime.b_field_gauss,
+        b_field_gamma=runtime.b_field_gamma,
+        cel_threshold_log_width=DEFAULT_CEL_LOG_BIN_THRESHOLD,
+        progress=progress,
+    ).with_scaled_spectra(1.0 / (4.0 * np.pi))
 
     status("CascadeDiffuse completed.")
-    return final_result / (4.0 * np.pi)
+    return result if return_state else result.gamma
 
 
 def RedshiftEvolving(
@@ -355,6 +363,7 @@ def RedshiftEvolving(
     zStart: float,
     zDistrib: np.ndarray | list[float],
 ) -> np.ndarray:
+    """Redshift a source history whose injected spectrum itself evolves with redshift."""
     inj_spectra = _validate_spectrum_2d(injSpectra)
     z_start = _validate_z_start(zStart)
     z_distrib = _validate_z_distribution(zDistrib)
@@ -376,6 +385,7 @@ def AttenuateEvolving(
     zStart: float,
     zDistrib: np.ndarray | list[float],
 ) -> np.ndarray:
+    """Propagate an evolving photon emissivity with absorption but no secondary particles."""
     inj_spectra = _validate_spectrum_2d(injSpectra)
     z_start = _validate_z_start(zStart)
     z_distrib = _validate_z_distribution(zDistrib)
@@ -386,84 +396,76 @@ def AttenuateEvolving(
     volume_norms = _volume_norms(z_start, z_distrib)
     z_max_index = len(volume_norms)
     progress = ProgressBar("AttenuateEvolving", z_max_index)
-
-    if get_numba_enabled() and runtime.attenuation_vectors is not None:
-        final_result = np.zeros(len(energies), dtype=np.float64)
-        for display_idx, window_idx in enumerate(range(z_max_index - 1, -1, -1), start=1):
-            final_result = propagate_evolving_attenuation_window_numba(
-                final_result,
-                volume_norms[window_idx] * inj_spectra[window_idx],
-                runtime.attenuation_vectors[window_idx],
-                runtime.redshift_left_idx[window_idx],
-                runtime.redshift_weights[window_idx],
-            )
-            progress.update(display_idx)
-    else:
-        final_result = propagate_evolving_attenuation_fast(
-            inj_spectra,
-            volume_norms,
-            z_max_index,
-            runtime.attenuation_vectors,
-            _redshift_cycle_callback,
-            progress=progress,
-        )
+    final_result = propagate_evolving_attenuation_fast(
+        inj_spectra,
+        volume_norms,
+        z_max_index,
+        runtime.attenuation_vectors,
+        _redshift_cycle_callback,
+        progress=progress,
+    )
 
     status("AttenuateEvolving completed.")
     return final_result / (4.0 * np.pi)
 
 
 def CascadeEvolving(
-    injSpectra: np.ndarray | list[list[float]],
+    gammaSpectra: np.ndarray | list[list[float]],
     zStart: float,
     zDistrib: np.ndarray | list[float],
-) -> np.ndarray:
-    inj_spectra = _validate_spectrum_2d(injSpectra)
+    electronSpectra: np.ndarray | list[list[float]] | None = None,
+    *,
+    return_state: bool = False,
+) -> np.ndarray | CascadeResult:
+    """Run the full cascade for a source history with redshift-dependent injection."""
+    inj_spectra = _validate_spectrum_2d(gammaSpectra)
+    electron_spectra = _validate_optional_spectrum_2d(
+        electronSpectra,
+        label="Injected electron",
+        announce=electronSpectra is not None,
+    )
     z_start = _validate_z_start(zStart)
     z_distrib = _validate_z_distribution(zDistrib)
     status(f"Running CascadeEvolving for zStart={z_start:.6g}")
 
     runtime = state()
-    runtime.ensure_ebl_loaded(refresh_active_cycle=True)
+    runtime.ensure_transport_loaded()
     volume_norms = _volume_norms(z_start, z_distrib)
     z_max_index = len(volume_norms)
     progress = ProgressBar("CascadeEvolving", z_max_index)
 
-    if get_numba_enabled() and runtime.cycle_packed_array is not None:
-        final_result = np.zeros(len(energies), dtype=np.float64)
-        for display_idx, window_idx in enumerate(range(z_max_index - 1, -1, -1), start=1):
-            final_result = propagate_evolving_cascade_window_numba(
-                final_result,
-                volume_norms[window_idx] * inj_spectra[window_idx],
-                int(runtime.row_ptr[window_idx]),
-                int(runtime.row_ptr[window_idx + 1]),
-                runtime.step_sizes,
-                runtime.zreg_indices,
-                runtime.extinction_coeffs,
-                runtime.cycle_packed_array,
-                runtime.redshift_left_idx[window_idx],
-                runtime.redshift_weights[window_idx],
-            )
-            progress.update(display_idx)
-    else:
-        final_result = propagate_evolving_cascade_fast(
-            inj_spectra,
-            volume_norms,
-            z_max_index,
-            runtime.step_sizes,
-            runtime.row_ptr,
-            runtime.zreg_indices,
-            runtime.log_extinction_coeffs,
-            runtime.get_weighted_cycle_slice,
-            runtime.redshift_left_idx,
-            runtime.redshift_weights,
-            progress=progress,
-        )
+    result = propagate_evolving_transport(
+        inj_spectra,
+        electron_spectra,
+        volume_norms=volume_norms,
+        z_max_index=z_max_index,
+        step_sizes=runtime.step_sizes,
+        row_ptr=runtime.row_ptr,
+        zreg_indices=runtime.zreg_indices,
+        pp_log_extinction=runtime.log_extinction_coeffs,
+        ics_log_extinction=runtime.log_ics_extinction_coeffs,
+        d_edt_ics=runtime.d_edt_ics,
+        get_pp_kernel=runtime.get_weighted_pp_slice,
+        get_pp_below_grid_energy=runtime.get_pp_below_grid_energy,
+        get_ics_gamma_kernel=runtime.get_weighted_ics_gamma_slice,
+        get_ics_electron_kernel=runtime.get_weighted_ics_electron_slice,
+        get_ics_gamma_row_energy=runtime.get_ics_gamma_row_energy,
+        get_ics_below_grid_energy=runtime.get_ics_below_grid_energy,
+        get_cel_data=runtime.get_ics_cel_data,
+        redshift_left_idx=runtime.redshift_left_idx,
+        redshift_weights=runtime.redshift_weights,
+        b_field_gauss=runtime.b_field_gauss,
+        b_field_gamma=runtime.b_field_gamma,
+        cel_threshold_log_width=DEFAULT_CEL_LOG_BIN_THRESHOLD,
+        progress=progress,
+    ).with_scaled_spectra(1.0 / (4.0 * np.pi))
 
     status("CascadeEvolving completed.")
-    return final_result / (4.0 * np.pi)
+    return result if return_state else result.gamma
 
 
 def changeEBLModel(EBL: int) -> None:
+    """Switch the cascade to a different EBL background model."""
     runtime = state()
     new_ebl = int(EBL)
     if new_ebl not in EBL_NAME_MAP:
@@ -482,6 +484,7 @@ def changeEBLModel(EBL: int) -> None:
 
 
 def changeMagneticField(BField: float, gamma: float, EBL: int) -> None:
+    """Set the magnetic-field law that competes with ICS through synchrotron cooling."""
     runtime = state()
     runtime.ensure_bundle_loaded()
 
@@ -490,75 +493,34 @@ def changeMagneticField(BField: float, gamma: float, EBL: int) -> None:
         raise ValueError(f"Invalid EBL index: {ebl}")
 
     status(
-        "Changing magnetic field cycle tables for EBL index "
+        "Setting electron-transport magnetic field for EBL index "
         f"{ebl} with B(z)={float(BField):.6g}*(1+z)^{float(gamma):.6g} Gauss."
     )
-    target = builders.generate_magnetic_field_variant(
-        runtime.library_path,
-        runtime.generated_library_path,
-        ebl_index=ebl,
-        b_field=float(BField),
-        gamma=float(gamma),
-    )
-
     runtime.set_ebl_index(ebl)
-    runtime.ensure_ebl_loaded(refresh_active_cycle=True)
+    runtime.set_magnetic_field(float(BField), float(gamma))
+    runtime.ensure_transport_loaded()
     _state_module.EBLindex = ebl
-    status(f"Magnetic field update completed. {target.name} was written, activated, and EBL model {EBL_DESCRIPTION_MAP[ebl]} is now active.")
-
-
-def convert_legacy_library(
-    source_path: str | os.PathLike[str],
-    target_path: str | os.PathLike[str],
-    *,
-    overwrite: bool = False,
-) -> Path:
-    return bundle.convert_legacy_library(source_path, target_path, overwrite=overwrite)
+    status(
+        "Magnetic field update completed. "
+        "Electron transport will apply synchrotron-loss competition with "
+        f"EBL model {EBL_DESCRIPTION_MAP[ebl]} active."
+    )
 
 
 def get_bundle_info() -> dict[str, object]:
+    """Return a summary of the active runtime bundle."""
     return bundle.bundle_info(get_library_path())
 
 
-def list_generated_variants(ebl_index: int) -> list[dict[str, object]]:
-    return bundle.generated_variants(get_library_path(), int(ebl_index))
-
-
-def get_active_cycle_path(ebl_index: int | None = None) -> Path:
-    runtime = state()
-    target_ebl = runtime.ebl_index if ebl_index is None else int(ebl_index)
-    return bundle.resolve_active_cycle_path(get_library_path(), target_ebl)
-
-
-def set_active_cycle_path(
-    path: str | os.PathLike[str],
-    ebl_index: int | None = None,
-    *,
-    switch_ebl: bool = True,
-) -> Path:
-    target = bundle.activate_cycle_path(get_library_path(), path, ebl_index=ebl_index)
-    target_ebl = int(ebl_index) if ebl_index is not None else bundle.infer_cycle_ebl_index(target)
-    runtime = state()
-    if switch_ebl:
-        runtime.set_ebl_index(target_ebl)
-        _state_module.EBLindex = target_ebl
-    if runtime.ebl_index == target_ebl:
-        runtime.ensure_ebl_loaded(refresh_active_cycle=True)
-    return target
-
-
 def reset_factory_settings() -> None:
+    """Restore the default EBL model and turn off synchrotron competition."""
     runtime = state()
     runtime.ensure_bundle_loaded()
-    bundle.clear_active_generated_variant(runtime.library_path)
     runtime.set_ebl_index(1)
-    runtime.ensure_ebl_loaded(refresh_active_cycle=True)
+    runtime.set_magnetic_field(0.0, 0.0)
+    runtime.ensure_ebl_loaded()
     _state_module.EBLindex = 1
-    status("Factory settings restored: EBL model set to Saldana-Lopez et al. (2021) and cycle tables reset to defaults.")
-
-
-def export_active_cycle_to_legacy_mat(ebl_index: int, target_path: str | os.PathLike[str]) -> Path:
-    return bundle.export_active_cycle_to_legacy_mat(get_library_path(), int(ebl_index), target_path)
+    status("Factory settings restored: EBL model set to Saldana-Lopez et al. (2021) and magnetic field reset.")
 
 
 redshift_point = RedshiftPoint
@@ -582,6 +544,7 @@ __all__ = [
     "elecmass",
     "echarge",
     "sigmaTe",
+    "CascadeResult",
     "energies",
     "dEnergiesGamma",
     "diffuseSteps",
@@ -590,19 +553,13 @@ __all__ = [
     "EBL_NAME_MAP",
     "EBL_DESCRIPTION_MAP",
     "LIB_PATH_ENV_VAR",
-    "GENERATED_LIB_PATH_ENV_VAR",
     "hubble",
     "cutoffPowerLaw",
     "specPlot",
     "set_progress",
-    "set_numba",
-    "is_numba_available",
-    "get_numba_enabled",
     "reset_state",
     "set_library_path",
-    "set_generated_library_path",
     "get_library_path",
-    "get_generated_library_path",
     "diffuseDistancesIndex",
     "RedshiftPoint",
     "AttenuatePoint",
@@ -615,13 +572,8 @@ __all__ = [
     "CascadeEvolving",
     "changeEBLModel",
     "changeMagneticField",
-    "convert_legacy_library",
     "get_bundle_info",
-    "list_generated_variants",
-    "get_active_cycle_path",
-    "set_active_cycle_path",
     "reset_factory_settings",
-    "export_active_cycle_to_legacy_mat",
     "redshift_point",
     "attenuate_point",
     "cascade_point",

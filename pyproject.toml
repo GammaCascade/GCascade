@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gcascade-v5"
-version = "5.0"
-description = "Python port of GCascadeV4"
+version = "5.1"
+description = "Python port of GCascadeV4 with electron-tracking cascade transport"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -24,9 +24,6 @@ dev = [
   "pytest>=7.4",
   "pytest-cov>=4.1",
   "notebook>=7.0"
-]
-performance = [
-  "numba>=0.59"
 ]
 
 [tool.setuptools]

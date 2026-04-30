@@ -7,6 +7,13 @@ def test_grids_have_expected_shapes():
     assert g.diffuseDistances.shape == (1036,)
     assert g.diffuseSteps.shape == (1036,)
     assert g.zReg.shape == (1001,)
+    assert g.diffuseDistances[-1] == 10.0
+    assert np.array_equal(g.diffuseDistances, np.round(g.diffuseDistances, 12))
+    assert np.array_equal(g.zReg, np.round(g.zReg, 2))
+    assert np.array_equal(
+        g.energies,
+        np.array([float(f"{value:.15g}") for value in g.energies], dtype=np.float64),
+    )
 
 
 def test_grids_monotonic():

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+"""Runtime state for the active GCascadeV5 library bundle and EBL selection."""
+
 from collections import OrderedDict
 from dataclasses import dataclass
 import os
@@ -9,33 +11,27 @@ from typing import Any
 import h5py
 import numpy as np
 
-from . import config
-from . import bundle, legacy
+from . import bundle
+from .physics import EBL_NAME_MAP, dEnergiesGamma, energies
 
 
-LIB_PATH_ENV_VAR = legacy.LIB_PATH_ENV_VAR
-GENERATED_LIB_PATH_ENV_VAR = legacy.GENERATED_LIB_PATH_ENV_VAR
-_TRAPEZOID_WEIGHTS = np.empty(len(legacy.energies), dtype=np.float64)
-_TRAPEZOID_WEIGHTS[0] = legacy.dEnergiesGamma[0]
-_TRAPEZOID_WEIGHTS[-1] = legacy.dEnergiesGamma[-1]
-_TRAPEZOID_WEIGHTS[1:-1] = legacy.dEnergiesGamma[:-1] + legacy.dEnergiesGamma[1:]
+LIB_PATH_ENV_VAR = "GCASCADE_LIB_PATH"
+_TRAPEZOID_WEIGHTS = np.empty(len(energies), dtype=np.float64)
+_TRAPEZOID_WEIGHTS[0] = dEnergiesGamma[0]
+_TRAPEZOID_WEIGHTS[-1] = dEnergiesGamma[-1]
+_TRAPEZOID_WEIGHTS[1:-1] = dEnergiesGamma[:-1] + dEnergiesGamma[1:]
 
 
 def _library_path_config_message() -> str:
+    """Explain how to point GCascade at a different runtime bundle."""
     return (
         f"Configure with {LIB_PATH_ENV_VAR} (before import) or call "
-        "gcascade_v5.set_library_path('/path/to/gcascade_bundle')."
-    )
-
-
-def _generated_library_path_config_message() -> str:
-    return (
-        f"Configure with {GENERATED_LIB_PATH_ENV_VAR} (before import) or call "
-        "gcascade_v5.set_generated_library_path('/path/to/generated')."
+        "gcascade_v5.set_library_path('/path/to/LibrariesV5')."
     )
 
 
 def _discover_default_library_path() -> Path:
+    """Search standard locations for the default GCascadeV5 runtime bundle."""
     env_path = os.getenv(LIB_PATH_ENV_VAR)
     if env_path:
         return Path(env_path).expanduser().resolve()
@@ -51,19 +47,11 @@ def _discover_default_library_path() -> Path:
     return (Path.cwd() / "LibrariesV5").resolve()
 
 
-def _discover_default_generated_library_path(library_path: Path | None = None) -> Path:
-    env_path = os.getenv(GENERATED_LIB_PATH_ENV_VAR)
-    if env_path:
-        return Path(env_path).expanduser().resolve()
-    if library_path is not None and bundle.is_bundle_root(library_path):
-        return (Path(library_path).expanduser().resolve() / bundle.GENERATED_DIRNAME).resolve()
-    return (Path.cwd() / "generated_libraries").resolve()
-
-
 @dataclass
 class RuntimeBundleState:
+    """In-memory handles and cached tables for the active cascade bundle."""
+
     library_path: Path
-    generated_library_path: Path
     ebl_index: int = 1
 
     manifest: dict[str, Any] | None = None
@@ -76,25 +64,29 @@ class RuntimeBundleState:
     packed_row_ptr: np.ndarray | None = None
 
     runtime_ebl_file: h5py.File | None = None
-    cycle_file: h5py.File | None = None
-    active_cycle_path: Path | None = None
     imfp: np.ndarray | None = None
     extinction_coeffs: np.ndarray | None = None
     log_extinction_coeffs: np.ndarray | None = None
     attenuation_vectors: np.ndarray | None = None
-    cycle_packed_array: np.ndarray | None = None
-    _cycle_cache: OrderedDict[int, np.ndarray] | None = None
-    _dense_cycle_cache: OrderedDict[int, np.ndarray] | None = None
-    _weighted_cycle_cache: OrderedDict[int, np.ndarray] | None = None
+    ics_imfp: np.ndarray | None = None
+    ics_extinction_coeffs: np.ndarray | None = None
+    log_ics_extinction_coeffs: np.ndarray | None = None
+    d_edt_ics: np.ndarray | None = None
+    _weighted_pp_cache: OrderedDict[int, np.ndarray] | None = None
+    _pp_below_grid_cache: OrderedDict[int, np.ndarray] | None = None
+    _weighted_ics_gamma_cache: OrderedDict[int, np.ndarray] | None = None
+    _weighted_ics_electron_cache: OrderedDict[int, np.ndarray] | None = None
+    _ics_gamma_energy_cache: OrderedDict[int, np.ndarray] | None = None
+    _ics_below_grid_cache: OrderedDict[int, np.ndarray] | None = None
+    _ics_cel_cache: OrderedDict[tuple[int, float], tuple[np.ndarray, np.ndarray]] | None = None
+    b_field_gauss: float = 0.0
+    b_field_gamma: float = 0.0
 
     def reset(self) -> None:
+        """Drop open files and cached tables so the next call reloads the bundle."""
         if self.runtime_ebl_file is not None:
             self.runtime_ebl_file.close()
-        if self.cycle_file is not None and self.cycle_file is not self.runtime_ebl_file:
-            self.cycle_file.close()
         self.runtime_ebl_file = None
-        self.cycle_file = None
-        self.active_cycle_path = None
         self.manifest = None
         self.step_sizes = None
         self.row_ptr = None
@@ -107,21 +99,23 @@ class RuntimeBundleState:
         self.extinction_coeffs = None
         self.log_extinction_coeffs = None
         self.attenuation_vectors = None
-        self.cycle_packed_array = None
-        self._cycle_cache = None
-        self._dense_cycle_cache = None
-        self._weighted_cycle_cache = None
+        self.ics_imfp = None
+        self.ics_extinction_coeffs = None
+        self.log_ics_extinction_coeffs = None
+        self.d_edt_ics = None
+        self._weighted_pp_cache = None
+        self._pp_below_grid_cache = None
+        self._weighted_ics_gamma_cache = None
+        self._weighted_ics_electron_cache = None
+        self._ics_gamma_energy_cache = None
+        self._ics_below_grid_cache = None
+        self._ics_cel_cache = None
 
     def ensure_bundle_loaded(self) -> None:
+        """Load the manifest once and verify that the selected path is a valid bundle."""
         if self.manifest is not None:
             return
         if not bundle.is_bundle_root(self.library_path):
-            if bundle.is_legacy_root(self.library_path):
-                raise RuntimeError(
-                    "The active library path points to a legacy MAT/CSV library. "
-                    "Convert it first with gcascade_v5.convert_legacy_library(source_path, target_path). "
-                    f"Active path: {self.library_path}"
-                )
             raise FileNotFoundError(
                 f"Could not find a GCascade HDF5 bundle at {self.library_path}. "
                 f"{_library_path_config_message()}"
@@ -129,6 +123,7 @@ class RuntimeBundleState:
         self.manifest = bundle.read_manifest(self.library_path)
 
     def ensure_common_loaded(self) -> None:
+        """Load the shared redshift-window tables used by every EBL model."""
         self.ensure_bundle_loaded()
         if self.step_sizes is not None:
             return
@@ -142,13 +137,10 @@ class RuntimeBundleState:
             self.redshift_scales = np.asarray(handle["redshift_scales"], dtype=np.float64)
             self.packed_row_ptr = np.asarray(handle["packed_row_ptr"], dtype=np.int32)
 
-    def ensure_ebl_loaded(self, *, refresh_active_cycle: bool = False) -> None:
+    def ensure_ebl_loaded(self) -> None:
+        """Load the photon attenuation tables for the currently selected EBL model."""
         self.ensure_common_loaded()
         if self.imfp is not None and self.extinction_coeffs is not None and self.attenuation_vectors is not None:
-            if refresh_active_cycle:
-                active_path = bundle.resolve_active_cycle_path(self.library_path, self.ebl_index)
-                if self.active_cycle_path != active_path:
-                    self._reload_cycle_source(active_path)
             return
 
         runtime_path = bundle.resolve_runtime_ebl_path(self.library_path, self.ebl_index)
@@ -158,24 +150,41 @@ class RuntimeBundleState:
         with np.errstate(divide="ignore"):
             self.log_extinction_coeffs = np.log(self.extinction_coeffs)
         self.attenuation_vectors = np.asarray(self.runtime_ebl_file["attenuation_vectors"], dtype=np.float64)
-        self._reload_cycle_source(bundle.resolve_active_cycle_path(self.library_path, self.ebl_index))
 
-    def _reload_cycle_source(self, cycle_path: Path) -> None:
-        if self.cycle_file is not None and self.cycle_file is not self.runtime_ebl_file:
-            self.cycle_file.close()
-        if self.runtime_ebl_file is not None and cycle_path.resolve() == Path(self.runtime_ebl_file.filename).resolve():
-            self.cycle_file = self.runtime_ebl_file
-        else:
-            self.cycle_file = h5py.File(cycle_path, "r")
-        self.active_cycle_path = cycle_path
-        self._cycle_cache = OrderedDict()
-        self._dense_cycle_cache = OrderedDict()
-        self._weighted_cycle_cache = OrderedDict()
-        self.cycle_packed_array = None
-        if config.get_numba_enabled():
-            self.cycle_packed_array = np.ascontiguousarray(self.cycle_file["cycle_packed"], dtype=np.float64)
+    def ensure_transport_loaded(self) -> None:
+        """Load the pair-production and inverse-Compton kernels for electron tracking."""
+        self.ensure_ebl_loaded()
+        assert self.runtime_ebl_file is not None
+        required = {
+            "pp_packed",
+            "ics_imfp",
+            "ics_extinction_coeffs",
+            "ics_gamma_packed",
+            "ics_electron_packed",
+            "dEdt_ics",
+        }
+        missing = sorted(required - set(self.runtime_ebl_file.keys()))
+        if missing:
+            raise RuntimeError(
+                "The active GCascade library is missing electron-tracking tables. "
+                f"Missing datasets in {self.runtime_ebl_file.filename}: {missing}"
+            )
+        if self.ics_imfp is None:
+            self.ics_imfp = np.asarray(self.runtime_ebl_file["ics_imfp"], dtype=np.float64)
+            self.ics_extinction_coeffs = np.asarray(self.runtime_ebl_file["ics_extinction_coeffs"], dtype=np.float64)
+            with np.errstate(divide="ignore"):
+                self.log_ics_extinction_coeffs = np.log(self.ics_extinction_coeffs)
+            self.d_edt_ics = np.asarray(self.runtime_ebl_file["dEdt_ics"], dtype=np.float64)
+            self._weighted_pp_cache = OrderedDict()
+            self._pp_below_grid_cache = OrderedDict()
+            self._weighted_ics_gamma_cache = OrderedDict()
+            self._weighted_ics_electron_cache = OrderedDict()
+            self._ics_gamma_energy_cache = OrderedDict()
+            self._ics_below_grid_cache = OrderedDict()
+            self._ics_cel_cache = OrderedDict()
 
     def set_ebl_index(self, ebl_index: int) -> None:
+        """Switch to a different EBL model and clear all EBL-specific caches."""
         new_ebl = int(ebl_index)
         if new_ebl == self.ebl_index:
             return
@@ -183,71 +192,184 @@ class RuntimeBundleState:
         if self.runtime_ebl_file is not None:
             self.runtime_ebl_file.close()
             self.runtime_ebl_file = None
-        if self.cycle_file is not None and self.cycle_file is not self.runtime_ebl_file:
-            self.cycle_file.close()
-            self.cycle_file = None
         self.imfp = None
         self.extinction_coeffs = None
         self.log_extinction_coeffs = None
         self.attenuation_vectors = None
-        self.cycle_packed_array = None
-        self._cycle_cache = None
-        self._dense_cycle_cache = None
-        self._weighted_cycle_cache = None
-        self.active_cycle_path = None
+        self.ics_imfp = None
+        self.ics_extinction_coeffs = None
+        self.log_ics_extinction_coeffs = None
+        self.d_edt_ics = None
+        self._weighted_pp_cache = None
+        self._pp_below_grid_cache = None
+        self._weighted_ics_gamma_cache = None
+        self._weighted_ics_electron_cache = None
+        self._ics_gamma_energy_cache = None
+        self._ics_below_grid_cache = None
+        self._ics_cel_cache = None
 
-    def get_row_bounds(self, window_idx: int) -> tuple[int, int]:
-        self.ensure_common_loaded()
-        assert self.row_ptr is not None
-        return int(self.row_ptr[window_idx]), int(self.row_ptr[window_idx + 1])
+    def _cache_transport_vector(self, cache: OrderedDict[int, np.ndarray], key: int, value: np.ndarray) -> np.ndarray:
+        """Store one recently used transport slice in a tiny least-recently-used cache."""
+        cache[key] = value
+        while len(cache) > 4:
+            cache.popitem(last=False)
+        return value
 
-    def get_cycle_slice(self, z_index: int) -> np.ndarray:
-        if self.cycle_file is None:
-            self.ensure_ebl_loaded()
-        if self.cycle_packed_array is not None:
-            return self.cycle_packed_array[z_index]
-        assert self.cycle_file is not None
-        assert self._cycle_cache is not None
-        if z_index in self._cycle_cache:
-            cached = self._cycle_cache.pop(z_index)
-            self._cycle_cache[z_index] = cached
-            return cached
-        loaded = np.asarray(self.cycle_file["cycle_packed"][z_index], dtype=np.float64)
-        self._cycle_cache[z_index] = loaded
-        while len(self._cycle_cache) > 4:
-            self._cycle_cache.popitem(last=False)
-        return loaded
-
-    def get_dense_cycle_slice(self, z_index: int) -> np.ndarray:
-        if self.cycle_file is None:
-            self.ensure_ebl_loaded()
-        if self._dense_cycle_cache is None:
-            self._dense_cycle_cache = OrderedDict()
-        if z_index in self._dense_cycle_cache:
-            cached = self._dense_cycle_cache.pop(z_index)
-            self._dense_cycle_cache[z_index] = cached
-            return cached
-        dense = bundle._unpack_lower_slice(self.get_cycle_slice(z_index))
-        self._dense_cycle_cache[z_index] = dense
-        while len(self._dense_cycle_cache) > 4:
-            self._dense_cycle_cache.popitem(last=False)
-        return dense
-
-    def get_weighted_cycle_slice(self, z_index: int) -> np.ndarray:
-        if self.cycle_file is None:
-            self.ensure_ebl_loaded()
-        if self._weighted_cycle_cache is None:
-            self._weighted_cycle_cache = OrderedDict()
-        if z_index in self._weighted_cycle_cache:
-            cached = self._weighted_cycle_cache.pop(z_index)
-            self._weighted_cycle_cache[z_index] = cached
-            return cached
-        dense = bundle._unpack_lower_slice(self.get_cycle_slice(z_index))
+    def _load_weighted_pp_slice(self, z_index: int) -> tuple[np.ndarray, np.ndarray]:
+        """Load the pair-production electron yield kernel for one redshift layer."""
+        self.ensure_transport_loaded()
+        assert self.runtime_ebl_file is not None
+        dense = bundle._unpack_lower_slice(np.asarray(self.runtime_ebl_file["pp_packed"][z_index], dtype=np.float64))
+        row_energy = dense @ (energies * _TRAPEZOID_WEIGHTS)
+        valid = np.logical_and(energies > 0.0, row_energy > 0.0)
+        if np.any(valid):
+            scale = 1.0 / float(np.median(row_energy[valid] / energies[valid]))
+            dense *= scale
+            row_energy *= scale
         weighted = np.ascontiguousarray(dense.T * _TRAPEZOID_WEIGHTS)
-        self._weighted_cycle_cache[z_index] = weighted
-        while len(self._weighted_cycle_cache) > 4:
-            self._weighted_cycle_cache.popitem(last=False)
-        return weighted
+        below_grid = np.maximum(energies - row_energy, 0.0)
+        return weighted, below_grid.astype(np.float64, copy=False)
+
+    def _load_weighted_ics_slices(
+        self,
+        z_index: int,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Load the photon and electron inverse-Compton kernels for one redshift layer."""
+        self.ensure_transport_loaded()
+        assert self.runtime_ebl_file is not None
+        gamma_dense = bundle._unpack_lower_slice(
+            np.asarray(self.runtime_ebl_file["ics_gamma_packed"][z_index], dtype=np.float64)
+        )
+        electron_dense = bundle._unpack_lower_slice(
+            np.asarray(self.runtime_ebl_file["ics_electron_packed"][z_index], dtype=np.float64)
+        )
+        gamma_energy = gamma_dense @ (energies * _TRAPEZOID_WEIGHTS)
+        electron_energy = electron_dense @ (energies * _TRAPEZOID_WEIGHTS)
+        total_energy = gamma_energy + electron_energy
+        valid = np.logical_and(energies > 0.0, total_energy > 0.0)
+        if np.any(valid):
+            scale = 1.0 / float(np.median(total_energy[valid] / energies[valid]))
+            gamma_dense *= scale
+            electron_dense *= scale
+            gamma_energy *= scale
+            electron_energy *= scale
+            total_energy *= scale
+        below_grid = np.maximum(energies - total_energy, 0.0)
+        weighted_gamma = np.ascontiguousarray(gamma_dense.T * _TRAPEZOID_WEIGHTS)
+        weighted_electron = np.ascontiguousarray(electron_dense.T * _TRAPEZOID_WEIGHTS)
+        return (
+            weighted_gamma,
+            weighted_electron,
+            gamma_energy.astype(np.float64, copy=False),
+            below_grid.astype(np.float64, copy=False),
+        )
+
+    def get_weighted_pp_slice(self, z_index: int) -> np.ndarray:
+        """Return the pair-production electron kernel weighted for fast matrix products."""
+        if self._weighted_pp_cache is None:
+            self._weighted_pp_cache = OrderedDict()
+        if self._pp_below_grid_cache is None:
+            self._pp_below_grid_cache = OrderedDict()
+        if z_index not in self._weighted_pp_cache:
+            weighted, below_grid = self._load_weighted_pp_slice(int(z_index))
+            self._cache_transport_vector(self._weighted_pp_cache, int(z_index), weighted)
+            self._cache_transport_vector(self._pp_below_grid_cache, int(z_index), below_grid)
+        cached = self._weighted_pp_cache.pop(int(z_index))
+        self._weighted_pp_cache[int(z_index)] = cached
+        return cached
+
+    def get_pp_below_grid_energy(self, z_index: int) -> np.ndarray:
+        """Return the pair-production energy that falls below the tracked grid."""
+        self.get_weighted_pp_slice(int(z_index))
+        assert self._pp_below_grid_cache is not None
+        cached = self._pp_below_grid_cache.pop(int(z_index))
+        self._pp_below_grid_cache[int(z_index)] = cached
+        return cached
+
+    def get_weighted_ics_gamma_slice(self, z_index: int) -> np.ndarray:
+        """Return the inverse-Compton photon yield kernel weighted for fast matrix products."""
+        if self._weighted_ics_gamma_cache is None:
+            self._weighted_ics_gamma_cache = OrderedDict()
+        if self._weighted_ics_electron_cache is None:
+            self._weighted_ics_electron_cache = OrderedDict()
+        if self._ics_gamma_energy_cache is None:
+            self._ics_gamma_energy_cache = OrderedDict()
+        if self._ics_below_grid_cache is None:
+            self._ics_below_grid_cache = OrderedDict()
+        if z_index not in self._weighted_ics_gamma_cache:
+            weighted_gamma, weighted_electron, gamma_energy, below_grid = self._load_weighted_ics_slices(int(z_index))
+            self._cache_transport_vector(self._weighted_ics_gamma_cache, int(z_index), weighted_gamma)
+            self._cache_transport_vector(self._weighted_ics_electron_cache, int(z_index), weighted_electron)
+            self._cache_transport_vector(self._ics_gamma_energy_cache, int(z_index), gamma_energy)
+            self._cache_transport_vector(self._ics_below_grid_cache, int(z_index), below_grid)
+        cached = self._weighted_ics_gamma_cache.pop(int(z_index))
+        self._weighted_ics_gamma_cache[int(z_index)] = cached
+        return cached
+
+    def get_weighted_ics_electron_slice(self, z_index: int) -> np.ndarray:
+        """Return the inverse-Compton electron redistribution kernel."""
+        self.get_weighted_ics_gamma_slice(int(z_index))
+        assert self._weighted_ics_electron_cache is not None
+        cached = self._weighted_ics_electron_cache.pop(int(z_index))
+        self._weighted_ics_electron_cache[int(z_index)] = cached
+        return cached
+
+    def get_ics_gamma_row_energy(self, z_index: int) -> np.ndarray:
+        """Return the mean photon energy emitted by one ICS interaction from each bin."""
+        self.get_weighted_ics_gamma_slice(int(z_index))
+        assert self._ics_gamma_energy_cache is not None
+        cached = self._ics_gamma_energy_cache.pop(int(z_index))
+        self._ics_gamma_energy_cache[int(z_index)] = cached
+        return cached
+
+    def get_ics_below_grid_energy(self, z_index: int) -> np.ndarray:
+        """Return the ICS energy that leaves the tracked grid entirely."""
+        self.get_weighted_ics_gamma_slice(int(z_index))
+        assert self._ics_below_grid_cache is not None
+        cached = self._ics_below_grid_cache.pop(int(z_index))
+        self._ics_below_grid_cache[int(z_index)] = cached
+        return cached
+
+    def get_ics_cel_data(self, z_index: int, threshold_log_width: float) -> tuple[np.ndarray, np.ndarray]:
+        """Mark the electron bins where ICS is treated as a continuous energy loss."""
+        self.ensure_transport_loaded()
+        key = (int(z_index), float(threshold_log_width))
+        if self._ics_cel_cache is None:
+            self._ics_cel_cache = OrderedDict()
+        if key in self._ics_cel_cache:
+            cached = self._ics_cel_cache.pop(key)
+            self._ics_cel_cache[key] = cached
+            return cached
+
+        assert self.runtime_ebl_file is not None
+        dense = bundle._unpack_lower_slice(
+            np.asarray(self.runtime_ebl_file["ics_electron_packed"][int(z_index)], dtype=np.float64)
+        )
+        output_weights = dense * _TRAPEZOID_WEIGHTS[None, :]
+        norm = np.sum(output_weights, axis=1)
+        mean_energy = np.divide(
+            output_weights @ energies,
+            norm,
+            out=energies.copy(),
+            where=norm > 0.0,
+        )
+        mean_energy = np.minimum(mean_energy, energies)
+        log_width = np.empty_like(energies)
+        log_width[:-1] = np.diff(np.log(energies))
+        log_width[-1] = log_width[-2]
+        with np.errstate(divide="ignore", invalid="ignore"):
+            loss_widths = np.log(energies / np.maximum(mean_energy, energies[0])) / log_width
+        cel_mask = np.logical_and(norm > 0.0, loss_widths < float(threshold_log_width))
+        result = (cel_mask.astype(bool), mean_energy.astype(np.float64, copy=False))
+        self._ics_cel_cache[key] = result
+        while len(self._ics_cel_cache) > 4:
+            self._ics_cel_cache.popitem(last=False)
+        return result
+
+    def set_magnetic_field(self, b_field_gauss: float, gamma: float) -> None:
+        """Store the magnetic-field law B(z)=B0(1+z)^gamma used by synchrotron cooling."""
+        self.b_field_gauss = float(b_field_gauss)
+        self.b_field_gamma = float(gamma)
 
 
 _STATE: RuntimeBundleState | None = None
@@ -255,18 +377,18 @@ EBLindex = 1
 
 
 def state() -> RuntimeBundleState:
+    """Return the singleton runtime state used by the public API."""
     global _STATE, EBLindex
     if _STATE is None:
-        library_path = _discover_default_library_path()
         _STATE = RuntimeBundleState(
-            library_path=library_path,
-            generated_library_path=_discover_default_generated_library_path(library_path),
+            library_path=_discover_default_library_path(),
             ebl_index=EBLindex,
         )
     return _STATE
 
 
 def reset_state() -> None:
+    """Reset the global runtime state to its default configuration."""
     global _STATE, EBLindex
     if _STATE is not None:
         _STATE.reset()
@@ -275,6 +397,7 @@ def reset_state() -> None:
 
 
 def set_library_path(path: str | os.PathLike[str]) -> None:
+    """Point the runtime at a different GCascadeV5 bundle directory."""
     global _STATE
     resolved = Path(path).expanduser().resolve()
     if not resolved.exists():
@@ -282,32 +405,13 @@ def set_library_path(path: str | os.PathLike[str]) -> None:
     if not resolved.is_dir():
         raise NotADirectoryError(f"Library path is not a directory: {resolved}")
     if _STATE is None:
-        _STATE = RuntimeBundleState(resolved, _discover_default_generated_library_path(resolved))
+        _STATE = RuntimeBundleState(resolved)
     else:
-        old_library = _STATE.library_path
-        old_generated_default = _discover_default_generated_library_path(old_library)
-        old_generated_path = _STATE.generated_library_path
         _STATE.library_path = resolved
-        if old_generated_path == old_generated_default:
-            _STATE.generated_library_path = _discover_default_generated_library_path(resolved)
         _STATE.reset()
 
 
-def set_generated_library_path(path: str | os.PathLike[str]) -> None:
-    global _STATE
-    resolved = Path(path).expanduser().resolve()
-    if resolved.exists() and not resolved.is_dir():
-        raise NotADirectoryError(f"Generated library path is not a directory: {resolved}")
-    if _STATE is None:
-        library_path = _discover_default_library_path()
-        _STATE = RuntimeBundleState(library_path, resolved)
-    else:
-        _STATE.generated_library_path = resolved
-
-
 def get_library_path() -> Path:
+    """Return the active bundle directory."""
     return state().library_path
 
-
-def get_generated_library_path() -> Path:
-    return state().generated_library_path
