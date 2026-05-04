@@ -26,6 +26,23 @@ Install GCascadeV5 together with the notebook and test dependencies:
 pip install -e '.[dev]'
 ```
 
+## Download The Runtime Libraries
+
+The `LibrariesV5` runtime bundle is distributed through Zenodo:
+
+- record page: [https://zenodo.org/records/19926427](https://zenodo.org/records/19926427)
+- direct ZIP download: [https://zenodo.org/records/19926427/files/LibrariesV5.zip](https://zenodo.org/records/19926427/files/LibrariesV5.zip)
+
+The simplest setup is to download and extract the archive directly into the
+repository root so that this folder exists:
+
+```text
+/path/to/GCascadeV5/LibrariesV5
+```
+
+With that layout, GCascadeV5 should find the library automatically when run
+from the repository directory.
+
 Open the tutorial notebook with:
 
 ```bash
@@ -60,6 +77,9 @@ import gcascade_v5 as gc
 
 gc.set_library_path("/path/to/LibrariesV5")
 ```
+
+If you extracted the Zenodo archive into the repository root as
+`GCascadeV5/LibrariesV5`, you normally do not need to set this manually.
 
 ## Quick Start
 
@@ -177,4 +197,3 @@ PYTHONPATH=src python3 -m pytest -q
 All end-user examples are collected in:
 
 - `tutorial.ipynb`
-
